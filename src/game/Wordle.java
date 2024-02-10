@@ -29,31 +29,28 @@ public class Wordle {
         boolean isTargetCharacterMatch = targetInfoCharacter != null;
         var guestPositions = guestInfoCharacter.getPositions();
         List<Integer> targetPositions = (isTargetCharacterMatch) ? targetInfoCharacter.getPositions() : null;
-        for (int i = guestPositions.size() - 1; i >= 0; i--) {
-            if (isTargetCharacterMatch) {
-                int guestPosition = guestPositions.get(i);
-                if (guestInfoCharacter.getNbOccurrences() > 0 &&
-                        targetPositions.contains(guestPosition)) { // EXACT MATCH
-                    setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
-                    decrementNbOccurrencesOf(guestInfoCharacter);
-                    decrementNbOccurrencesOf(targetInfoCharacter);
-                }
+        guestPositions.reversed().stream()
+                .filter(p -> isTargetCharacterMatch)
+                .forEach(position -> {
+                            int guestPosition = position;
+                            if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) { // EXACT MATCH
+                                setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
+                                decrementNbOccurrencesOf(guestInfoCharacter);
+                                decrementNbOccurrencesOf(targetInfoCharacter);
+                            }
 
-                if (guestInfoCharacter.getNbOccurrences() > 0 &&
-                        targetInfoCharacter.getNbOccurrences() > 0) { // PARTIAL EXACT
-                    if ((results[guestPosition] == EXACT_MATCH)) continue;
-                    if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
-                        setResultStatusAtPosition(guestPosition,PARTIAL_MATCH,results);
-                    else
-                        setResultStatusAtPosition(guestPositions.getFirst(),PARTIAL_MATCH,results);
+                            if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) { // PARTIAL EXACT
+                                if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
+                                    setResultStatusAtPosition(guestPosition, PARTIAL_MATCH, results);
+                                else
+                                    setResultStatusAtPosition(guestPositions.getFirst(), PARTIAL_MATCH, results);
 
-                    if ((results[guestPosition] == PARTIAL_MATCH)) {
-                        decrementNbOccurrencesOf(guestInfoCharacter);
-                        decrementNbOccurrencesOf(targetInfoCharacter);
-                    }
-                }
-            }
-        }
+                                if ((results[guestPosition] == PARTIAL_MATCH)) {
+                                    decrementNbOccurrencesOf(guestInfoCharacter);
+                                    decrementNbOccurrencesOf(targetInfoCharacter);
+                                }
+                            }
+                        });
     }
 
     private static void setResultStatusAtPosition(int position, MatchLetter status, MatchLetter[] results) {
