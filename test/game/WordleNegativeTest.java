@@ -8,7 +8,7 @@ import static game.MatchLetter.*;
 import static org.junit.jupiter.api.Assertions.*;
 public class WordleNegativeTest {
     @Test
-    void testsForevaluate(){
+    void allInOneAssertions(){
         assertAll(
                 () -> assertEquals(List.of(PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("FAVOR", "RAPID")),
                 () -> assertEquals(List.of(NO_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), evaluate("FAVOR", "RIVER")),
@@ -38,7 +38,5 @@ public class WordleNegativeTest {
         assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH), evaluate("SKILL", "SLICE"));
         assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH), evaluate("SKILL", "SILLY"));
         assertEquals(List.of(PARTIAL_MATCH, NO_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, NO_MATCH), evaluate("SAGAS", "ABASE"));
-
-
     }
 }
