@@ -32,25 +32,31 @@ public class Wordle {
         guestPositions.reversed().stream()
                 .filter(p -> isTargetCharacterMatch)
                 .forEach(position -> {
-                            int guestPosition = position;
-                            if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) { // EXACT MATCH
-                                setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
-                                decrementNbOccurrencesOf(guestInfoCharacter);
-                                decrementNbOccurrencesOf(targetInfoCharacter);
-                            }
+                    checkIfTheGuessCharacterIsExactMatch(guestInfoCharacter, targetInfoCharacter, position, targetPositions, results);
+                    checkIfTheGuessCharacterIsPartialMatch(guestInfoCharacter, targetInfoCharacter, position, guestPositions, results);
+                });
+    }
 
-                            if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) { // PARTIAL EXACT
-                                if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
-                                    setResultStatusAtPosition(guestPosition, PARTIAL_MATCH, results);
-                                else
-                                    setResultStatusAtPosition(guestPositions.getFirst(), PARTIAL_MATCH, results);
+    private static void checkIfTheGuessCharacterIsExactMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> targetPositions, MatchLetter[] results) {
+        if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) { // EXACT MATCH
+            setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
+            decrementNbOccurrencesOf(guestInfoCharacter);
+            decrementNbOccurrencesOf(targetInfoCharacter);
+        }
+    }
 
-                                if ((results[guestPosition] == PARTIAL_MATCH)) {
-                                    decrementNbOccurrencesOf(guestInfoCharacter);
-                                    decrementNbOccurrencesOf(targetInfoCharacter);
-                                }
-                            }
-                        });
+    private static void checkIfTheGuessCharacterIsPartialMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> guestPositions, MatchLetter[] results) {
+        if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) { // PARTIAL EXACT
+            if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
+                setResultStatusAtPosition(guestPosition, PARTIAL_MATCH, results);
+            else
+                setResultStatusAtPosition(guestPositions.getFirst(), PARTIAL_MATCH, results);
+
+            if ((results[guestPosition] == PARTIAL_MATCH)) {
+                decrementNbOccurrencesOf(guestInfoCharacter);
+                decrementNbOccurrencesOf(targetInfoCharacter);
+            }
+        }
     }
 
     private static void setResultStatusAtPosition(int position, MatchLetter status, MatchLetter[] results) {
