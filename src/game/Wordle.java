@@ -75,10 +75,10 @@ public class Wordle {
         return null;
     }
 
-    private static List<InfoCharacter> populateCharacters(HashMap<String, List<Integer>> data) {
-        return data.keySet()
+    private static List<InfoCharacter> populateCharacters(HashMap<String, List<Integer>> positions) {
+        return positions.keySet()
                 .stream()
-                .map(k -> InfoCharacter.Of(k, data.get(k)))
+                .map(k -> InfoCharacter.Of(k, positions.get(k)))
                 .collect(Collectors.toList());
     }
 
