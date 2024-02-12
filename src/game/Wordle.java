@@ -11,6 +11,10 @@ public class Wordle {
         validateParameters(target, "Target");
         validateParameters(guess, "Guess");
 
+        var exactMatchAll = new MatchLetter[]{EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH};
+        if ( guess.equals(target))
+            return  Arrays.stream(exactMatchAll).toList();
+
         var results = new MatchLetter[]{NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH};
         var targets = target.toCharArray();
         var guesses = guess.toCharArray();

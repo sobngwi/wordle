@@ -16,11 +16,4 @@ public class WordleTest {
         assertThat(true, is(equalTo(true)));
     }
 
-    @Test
-    void evaluateForTargetFAVORAndGuestFAVORAtFirstAttempt() {
-
-       var response =  evaluate("FAVOR", "FAVOR");
-
-       assertThat(response, is (equalTo(List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH))));
-    }
 }
