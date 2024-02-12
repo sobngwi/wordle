@@ -38,7 +38,7 @@ public class Wordle {
     }
 
     private static void checkIfTheGuessCharacterIsExactMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> targetPositions, MatchLetter[] results) {
-        if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) { // EXACT MATCH
+        if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) {
             setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
             decrementNbOccurrencesOf(guestInfoCharacter);
             decrementNbOccurrencesOf(targetInfoCharacter);
@@ -46,7 +46,7 @@ public class Wordle {
     }
 
     private static void checkIfTheGuessCharacterIsPartialMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> guestPositions, MatchLetter[] results) {
-        if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) { // PARTIAL EXACT
+        if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) {
             if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
                 setResultStatusAtPosition(guestPosition, PARTIAL_MATCH, results);
             else
@@ -112,15 +112,12 @@ public class Wordle {
 
     private static HashMap<String, List<Integer>> computePositions(char[] guesses) {
         var results = new HashMap<String, List<Integer>>();
-        for (int i = 0; i < guesses.length; i++) {
+        buildPositions(guesses, results);
+        updatePositions(guesses, results);
+        return results;
+    }
 
-            char k = guesses[i];
-            final String key = k + "-" + i;
-            List<Integer> positions = new ArrayList<>();
-            positions.add(i);
-            results.put(key, positions);
-        }
-
+    private static void updatePositions(char[] guesses, HashMap<String, List<Integer>> results) {
         for (int i = 0; i < guesses.length; i++) {
             char k = guesses[i];
             for (String key : results.keySet()) {
@@ -132,13 +129,30 @@ public class Wordle {
                 }
             }
         }
-        return results;
+    }
+
+    private static void buildPositions(char[] guesses, HashMap<String, List<Integer>> results) {
+        for (int i = 0; i < guesses.length; i++) {
+            char k = guesses[i];
+            final String key = k + "-" + i;
+            List<Integer> positions = new ArrayList<>();
+            positions.add(i);
+            results.put(key, positions);
+        }
     }
 
     private static void validateParameters(String paramValue, String paramName) {
-        if (paramValue == null || paramValue.isEmpty())
-            throw new RuntimeException(paramName + " must not be null or empty.");
+        validateNullOrEmptyParamValue(paramValue, paramName);
+        validateParamLengthValue(paramValue, paramName);
+    }
+
+    private static void validateParamLengthValue(String paramValue, String paramName) {
         if (paramValue.length() != 5)
             throw new RuntimeException(paramName + " length should be 5.");
+    }
+
+    private static void validateNullOrEmptyParamValue(String paramValue, String paramName) {
+        if (paramValue == null || paramValue.isEmpty())
+            throw new RuntimeException(paramName + " must not be null or empty.");
     }
 }
