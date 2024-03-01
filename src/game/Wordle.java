@@ -36,29 +36,34 @@ public class Wordle {
         guestPositions.reversed().stream()
                 .filter(p -> isTargetCharacterMatch)
                 .forEach(position -> {
-                    checkIfTheGuessCharacterIsExactMatch(guestInfoCharacter, targetInfoCharacter, position, targetPositions, results);
-                    checkIfTheGuessCharacterIsPartialMatch(guestInfoCharacter, targetInfoCharacter, position, guestPositions, results);
+                    CharactersValues charactersValuesExactMatch = new CharactersValues(guestInfoCharacter, targetInfoCharacter, position, targetPositions, results);
+                    CharactersValues charactersValuesPartialMatch = new CharactersValues(guestInfoCharacter, targetInfoCharacter, position, guestPositions, results);
+                    updateResultsIfTheGuessCharacterIsExactMatch(charactersValuesExactMatch);
+                    updateResultsIfTheGuessCharacterIsPartialMatch(charactersValuesPartialMatch);
                 });
     }
 
-    private static void checkIfTheGuessCharacterIsExactMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> targetPositions, MatchLetter[] results) {
-        if (guestInfoCharacter.getNbOccurrences() > 0 && targetPositions.contains(guestPosition)) {
-            setResultStatusAtPosition(guestPosition, EXACT_MATCH, results);
-            decrementNbOccurrencesOf(guestInfoCharacter);
-            decrementNbOccurrencesOf(targetInfoCharacter);
+
+    private record CharactersValues(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int position,
+                                    List<Integer> targetPositions, MatchLetter[] results) {
+    }
+
+    private static void updateResultsIfTheGuessCharacterIsExactMatch(CharactersValues charactersValues) {
+        if (charactersValues.guestInfoCharacter.nbOccurrences > 0 && charactersValues.targetPositions.contains(charactersValues.position)) {
+            setResultStatusAtPosition(charactersValues.position, EXACT_MATCH, charactersValues.results);
+            decrementNbOccurrencesOf(charactersValues.guestInfoCharacter, charactersValues.targetInfoCharacter);
         }
     }
 
-    private static void checkIfTheGuessCharacterIsPartialMatch(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int guestPosition, List<Integer> guestPositions, MatchLetter[] results) {
-        if (guestInfoCharacter.getNbOccurrences() > 0 && targetInfoCharacter.getNbOccurrences() > 0) {
-            if (results[guestPositions.getFirst()] == PARTIAL_MATCH)
-                setResultStatusAtPosition(guestPosition, PARTIAL_MATCH, results);
+    private static void updateResultsIfTheGuessCharacterIsPartialMatch(CharactersValues charactersValues) {
+        if (charactersValues.guestInfoCharacter.getNbOccurrences() > 0 && charactersValues.targetInfoCharacter.getNbOccurrences() > 0) {
+            if (charactersValues.results[charactersValues.targetPositions.getFirst()] == PARTIAL_MATCH)
+                setResultStatusAtPosition(charactersValues.position, PARTIAL_MATCH, charactersValues.results);
             else
-                setResultStatusAtPosition(guestPositions.getFirst(), PARTIAL_MATCH, results);
+                setResultStatusAtPosition(charactersValues.targetPositions.getFirst(), PARTIAL_MATCH, charactersValues.results);
 
-            if ((results[guestPosition] == PARTIAL_MATCH)) {
-                decrementNbOccurrencesOf(guestInfoCharacter);
-                decrementNbOccurrencesOf(targetInfoCharacter);
+            if ((charactersValues.results[charactersValues.position] == PARTIAL_MATCH)) {
+                decrementNbOccurrencesOf(charactersValues.guestInfoCharacter, charactersValues.targetInfoCharacter);
             }
         }
     }
@@ -67,8 +72,11 @@ public class Wordle {
         results[position] = status;
     }
 
-    private static void decrementNbOccurrencesOf(InfoCharacter infoCharacter) {
-        infoCharacter.setNbOccurrences(--infoCharacter.nbOccurrences);
+    private static void decrementNbOccurrencesOf(InfoCharacter... infoCharacters) {
+        for (InfoCharacter infoCharacter : infoCharacters) {
+            infoCharacter.setNbOccurrences(--infoCharacter.nbOccurrences);
+        }
+
     }
 
     private static InfoCharacter searchForTargetCharacter(InfoCharacter infoCharacter, List<InfoCharacter> targetsInfo) {
