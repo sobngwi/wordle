@@ -24,7 +24,6 @@ public class Wordle {
         var targetsInfo = populateCharacters(targetsPositions);
 
         guessesInfo.forEach((infoCharacter) -> computeTheStatusForTheGivenInfoCharacter(infoCharacter, targetsInfo, results));
-
         return Arrays.stream(results).toList();
     }
 
@@ -33,6 +32,10 @@ public class Wordle {
         boolean isTargetCharacterMatch = targetInfoCharacter != null;
         var guestPositions = guestInfoCharacter.getPositions();
         List<Integer> targetPositions = (isTargetCharacterMatch) ? targetInfoCharacter.getPositions() : null;
+        computeTheStatusAtPosition(guestInfoCharacter, results, guestPositions, isTargetCharacterMatch, targetInfoCharacter, targetPositions);
+    }
+
+    private static void computeTheStatusAtPosition(InfoCharacter guestInfoCharacter, MatchLetter[] results, List<Integer> guestPositions, boolean isTargetCharacterMatch, InfoCharacter targetInfoCharacter, List<Integer> targetPositions) {
         guestPositions.reversed().stream()
                 .filter(p -> isTargetCharacterMatch)
                 .forEach(position -> {
@@ -61,7 +64,6 @@ public class Wordle {
                 setResultStatusAtPosition(charactersValues.position, PARTIAL_MATCH, charactersValues.results);
             else
                 setResultStatusAtPosition(charactersValues.targetPositions.getFirst(), PARTIAL_MATCH, charactersValues.results);
-
             if ((charactersValues.results[charactersValues.position] == PARTIAL_MATCH)) {
                 decrementNbOccurrencesOf(charactersValues.guestInfoCharacter, charactersValues.targetInfoCharacter);
             }
@@ -122,34 +124,39 @@ public class Wordle {
         }
     }
 
-    private static HashMap<String, List<Integer>> computePositions(char[] guesses) {
-        var results = new HashMap<String, List<Integer>>();
-        buildPositions(guesses, results);
-        updatePositions(guesses, results);
-        return results;
+    private static HashMap<String, List<Integer>> computePositions(char[] positions) {
+        var stringListPositionsHashMap = new HashMap<String, List<Integer>>();
+        buildPositions(positions, stringListPositionsHashMap);
+        updatePositions(positions, stringListPositionsHashMap);
+        return stringListPositionsHashMap;
     }
 
-    private static void updatePositions(char[] guesses, HashMap<String, List<Integer>> results) {
+    private static void updatePositions(char[] guesses, HashMap<String, List<Integer>> stringListHashMap) {
         for (int i = 0; i < guesses.length; i++) {
-            char k = guesses[i];
-            for (String key : results.keySet()) {
-                if (key.charAt(0) == k) {
-                    List<Integer> positions = results.get(key);
-                    if (!positions.contains(i)) positions.add(i);
-                    Collections.sort(positions);
-                    results.put(key, positions);
-                }
+            char charAtIndex = guesses[i];
+            updatePositionsAtIndex(stringListHashMap, charAtIndex, i);
+        }
+
+    }
+
+    private static void updatePositionsAtIndex(HashMap<String, List<Integer>> results, char aCharacter, int index) {
+        for (String key : results.keySet()) {
+            if (key.charAt(0) == aCharacter) {
+                List<Integer> positions = results.get(key);
+                if (!positions.contains(index)) positions.add(index);
+                Collections.sort(positions);
+                results.put(key, positions);
             }
         }
     }
 
-    private static void buildPositions(char[] guesses, HashMap<String, List<Integer>> results) {
-        for (int i = 0; i < guesses.length; i++) {
-            char k = guesses[i];
-            final String key = k + "-" + i;
+    private static void buildPositions(char[] guessPositions, HashMap<String, List<Integer>> stringListHashMap) {
+        for (int index = 0; index < guessPositions.length; index++) {
+            char characterPosition = guessPositions[index];
+            final String key = characterPosition + "-" + index;
             List<Integer> positions = new ArrayList<>();
-            positions.add(i);
-            results.put(key, positions);
+            positions.add(index);
+            stringListHashMap.put(key, positions);
         }
     }
 
