@@ -2,6 +2,7 @@ package game;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static game.MatchLetter.*;
 
@@ -18,146 +19,109 @@ public class Wordle {
         var results = new MatchLetter[]{NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH};
         var targets = target.toCharArray();
         var guesses = guess.toCharArray();
-        var guessesPositions = computePositions(guesses);
-        var targetsPositions = computePositions(targets);
-        var guessesInfo = populateCharacters(guessesPositions);
-        var targetsInfo = populateCharacters(targetsPositions);
 
-        guessesInfo.forEach((infoCharacter) -> computeTheStatusForTheGivenInfoCharacter(infoCharacter, targetsInfo, results));
+        IntStream.range(0, 5).limit(5).forEach( i -> {
+            compute(targets, guesses, i, results);
+        });
         return Arrays.stream(results).toList();
     }
 
-    private static void computeTheStatusForTheGivenInfoCharacter(InfoCharacter guestInfoCharacter, List<InfoCharacter> targetsInfo, MatchLetter[] results) {
-        InfoCharacter targetInfoCharacter = searchForTargetCharacter(guestInfoCharacter, targetsInfo);
-        boolean isTargetCharacterMatch = targetInfoCharacter != null;
-        var guestPositions = guestInfoCharacter.getPositions();
-        List<Integer> targetPositions = (isTargetCharacterMatch) ? targetInfoCharacter.getPositions() : null;
-        computeTheStatusAtPosition(guestInfoCharacter, results, guestPositions, isTargetCharacterMatch, targetInfoCharacter, targetPositions);
-    }
-
-    private static void computeTheStatusAtPosition(InfoCharacter guestInfoCharacter, MatchLetter[] results, List<Integer> guestPositions, boolean isTargetCharacterMatch, InfoCharacter targetInfoCharacter, List<Integer> targetPositions) {
-        guestPositions.reversed().stream()
-                .filter(p -> isTargetCharacterMatch)
-                .forEach(position -> {
-                    CharactersValues charactersValuesExactMatch = new CharactersValues(guestInfoCharacter, targetInfoCharacter, position, targetPositions, results);
-                    CharactersValues charactersValuesPartialMatch = new CharactersValues(guestInfoCharacter, targetInfoCharacter, position, guestPositions, results);
-                    updateResultsIfTheGuessCharacterIsExactMatch(charactersValuesExactMatch);
-                    updateResultsIfTheGuessCharacterIsPartialMatch(charactersValuesPartialMatch);
-                });
-    }
-
-
-    private record CharactersValues(InfoCharacter guestInfoCharacter, InfoCharacter targetInfoCharacter, int position,
-                                    List<Integer> targetPositions, MatchLetter[] results) {
-    }
-
-    private static void updateResultsIfTheGuessCharacterIsExactMatch(CharactersValues charactersValues) {
-        if (charactersValues.guestInfoCharacter.nbOccurrences > 0 && charactersValues.targetPositions.contains(charactersValues.position)) {
-            setResultStatusAtPosition(charactersValues.position, EXACT_MATCH, charactersValues.results);
-            decrementNbOccurrencesOf(charactersValues.guestInfoCharacter, charactersValues.targetInfoCharacter);
-        }
-    }
-
-    private static void updateResultsIfTheGuessCharacterIsPartialMatch(CharactersValues charactersValues) {
-        if (charactersValues.guestInfoCharacter.getNbOccurrences() > 0 && charactersValues.targetInfoCharacter.getNbOccurrences() > 0) {
-            if (charactersValues.results[charactersValues.targetPositions.getFirst()] == PARTIAL_MATCH)
-                setResultStatusAtPosition(charactersValues.position, PARTIAL_MATCH, charactersValues.results);
-            else
-                setResultStatusAtPosition(charactersValues.targetPositions.getFirst(), PARTIAL_MATCH, charactersValues.results);
-            if ((charactersValues.results[charactersValues.position] == PARTIAL_MATCH)) {
-                decrementNbOccurrencesOf(charactersValues.guestInfoCharacter, charactersValues.targetInfoCharacter);
+    private static void compute(char[] targets, char[] guesses, int position, MatchLetter[] results ) {
+        Map<String, List<String>> guessCharacterLists = groupCharacters(guesses);
+        System.out.println("guessCharacterLists = " + guessCharacterLists);
+        Map<String, List<String>> targetCharacterLists = groupCharacters(targets);
+        System.out.println("targetCharacterLists = " + targetCharacterLists);
+        System.out.println("treating character " + guesses[position] + "  --- At position : " + position );
+        System.out.println(" guess info : " +  guessCharacterLists.get( guesses[position] + ""));
+        System.out.println(" target info : " + targetCharacterLists.get( guesses[position] + ""));
+       /* {s=[s:0], i=[i:2], k=[k:1], l=[l:3, l:4]} */
+       /* {c=[c:0], v=[v:2], i=[i:1, i:3], l=[l:4]} */
+       /* if ( targetCharacterLists.get( guesses[position] + "") == null ) {
+            System.out.println("Will set the result to NO_MATCH");
+            results[position] = NO_MATCH;
+            return;
+        } else */
+        if ( targetCharacterLists.get( guesses[position] + "") == null )
+            return;
+        if ( guessCharacterLists.get( guesses[position] + "").size() ==  targetCharacterLists.get( guesses[position] + "").size()
+        && guessCharacterLists.get( guesses[position] + "").size() == 1) {
+            System.out.println("Same Size 1 :" + guessCharacterLists.get(guesses[position] + "").size());
+            if ( guessCharacterLists.get( guesses[position] + "").equals(targetCharacterLists.get( guesses[position] + "")) ) {
+                results[position] = EXACT_MATCH;
+                return;
+            }
+            else {
+                results[position] = PARTIAL_MATCH;
+                return;
             }
         }
-    }
-
-    private static void setResultStatusAtPosition(int position, MatchLetter status, MatchLetter[] results) {
-        results[position] = status;
-    }
-
-    private static void decrementNbOccurrencesOf(InfoCharacter... infoCharacters) {
-        for (InfoCharacter infoCharacter : infoCharacters) {
-            infoCharacter.setNbOccurrences(--infoCharacter.nbOccurrences);
+        if ( guessCharacterLists.get( guesses[position] + "").size() ==  targetCharacterLists.get( guesses[position] + "").size() ) {
+            System.out.println("Same Size :" + guessCharacterLists.get( guesses[position] + "").size());
+            for (int i = 0; i < guessCharacterLists.get( guesses[position] + "").size(); i++) {
+                if ( targetCharacterLists.get( guesses[position] + "").contains( guessCharacterLists.get( guesses[position] + "").get(i))
+                 ) {
+                    System.out.println("Same Size :" + "EXACT");
+                    results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").get(i).split(":")[1])] = EXACT_MATCH;
+                    System.out.println("results22 EXACT = " + Arrays.toString(results));
+                }
+                else {
+                    System.out.println("Same Size :" + "PARTIAL" + " @Position " + Integer.parseInt(guessCharacterLists.get(guesses[position] + "").get(i).split(":")[1]));
+                    results[Integer.parseInt(guessCharacterLists.get(guesses[position] + "").get(i).split(":")[1])] = PARTIAL_MATCH;
+                    System.out.println("results 22 PARTIAL = " + Arrays.toString(results));
+                }
+            }
+           // results[position] = EXACT_MATCH;
+            return;
         }
+        else {
 
-    }
+            if ( guessCharacterLists.get( guesses[position] + "").size() == 2 && targetCharacterLists.get( guesses[position] + "").size() == 1 ) {
+                System.out.println("2-1");
+                 if ( guessCharacterLists.get( guesses[position] + "").getFirst().equals(targetCharacterLists.get( guesses[position] + "").getFirst()) )
+                 {
+                     System.out.println("2-1a Will set the result to EXACT_MATCH");
+                     results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getFirst().split(":")[1])] = EXACT_MATCH;
+                     return;
+                 }
+                if ( guessCharacterLists.get( guesses[position] + "").getLast().equals(targetCharacterLists.get( guesses[position] + "").getLast()) )
+                {
+                    System.out.println("2-1b Will set the result to EXACT_MATCH");
+                    results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1])] = EXACT_MATCH;
+                    return;
+                }
+                System.out.println("Will set the result to PARTIAL_MATCH and NO_MATCH");
+                int positionResultToSet = Integer.parseInt(guessCharacterLists.get(guesses[position] + "").getFirst().split(":")[1]);
+                System.out.println("positionResultToSet = " + positionResultToSet);
+                results[positionResultToSet] = PARTIAL_MATCH;
+                int j = Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1]);
+                results[j] = NO_MATCH;
+                System.out.println("results = " + Arrays.toString(results));
+                return;
 
-    private static InfoCharacter searchForTargetCharacter(InfoCharacter infoCharacter, List<InfoCharacter> targetsInfo) {
-        for (InfoCharacter targetChar : targetsInfo) {
-            if (infoCharacter.key.charAt(0) == targetChar.key.charAt(0))
-                return targetChar;
-        }
-        return null;
-    }
+            }
+            if ( guessCharacterLists.get( guesses[position] + "").size() == 1 && targetCharacterLists.get( guesses[position] + "").size() == 2 ) {
+                if ( targetCharacterLists.get( guesses[position] + "").contains( guessCharacterLists.get( guesses[position] + "").getFirst())) {
+                    System.out.println("1-2 Will set the result to EXACT_MATCH");
+                    results[position] = EXACT_MATCH;
+                    return;
+                }
+                else {
+                    System.out.println("1-2 Will set the result to PARTIAL MATCH");
+                    results[position] = PARTIAL_MATCH;
+                    return ;
+                }
 
-    private static List<InfoCharacter> populateCharacters(HashMap<String, List<Integer>> positions) {
-        return positions.keySet()
-                .stream()
-                .map(k -> InfoCharacter.Of(k, positions.get(k)))
-                .collect(Collectors.toList());
-    }
-
-    private static class InfoCharacter {
-        private final String key;
-        private final List<Integer> positions;
-        private int nbOccurrences;
-
-        private InfoCharacter(String key, List<Integer> positions) {
-            this.key = key;
-            this.positions = positions;
-            this.nbOccurrences = this.positions.size();
-        }
-
-        public static InfoCharacter Of(String key, List<Integer> positions) {
-            return new InfoCharacter(key, positions);
-        }
-
-        public List<Integer> getPositions() {
-            return positions;
-        }
-
-        public int getNbOccurrences() {
-            return nbOccurrences;
-        }
-
-        public void setNbOccurrences(int nbOccurrences) {
-            this.nbOccurrences = nbOccurrences;
-        }
-    }
-
-    private static HashMap<String, List<Integer>> computePositions(char[] positions) {
-        var stringListPositionsHashMap = new HashMap<String, List<Integer>>();
-        buildPositions(positions, stringListPositionsHashMap);
-        updatePositions(positions, stringListPositionsHashMap);
-        return stringListPositionsHashMap;
-    }
-
-    private static void updatePositions(char[] guesses, HashMap<String, List<Integer>> stringListHashMap) {
-        for (int i = 0; i < guesses.length; i++) {
-            char charAtIndex = guesses[i];
-            updatePositionsAtIndex(stringListHashMap, charAtIndex, i);
-        }
-
-    }
-
-    private static void updatePositionsAtIndex(HashMap<String, List<Integer>> results, char aCharacter, int index) {
-        for (String key : results.keySet()) {
-            if (key.charAt(0) == aCharacter) {
-                List<Integer> positions = results.get(key);
-                if (!positions.contains(index)) positions.add(index);
-                Collections.sort(positions);
-                results.put(key, positions);
             }
         }
+
+
     }
 
-    private static void buildPositions(char[] guessPositions, HashMap<String, List<Integer>> stringListHashMap) {
-        for (int index = 0; index < guessPositions.length; index++) {
-            char characterPosition = guessPositions[index];
-            final String key = characterPosition + "-" + index;
-            List<Integer> positions = new ArrayList<>();
-            positions.add(index);
-            stringListHashMap.put(key, positions);
-        }
+    private static Map<String, List<String>> groupCharacters(char[] guesses) {
+        return IntStream.range(0, 5)
+                .mapToObj(i -> guesses[i] + ":" + i)
+                .sorted(Comparator.comparing(k -> k.split(":")[0]))
+                .collect(Collectors.groupingBy(x -> x.split(":")[0]));
     }
 
     private static void validateParameters(String paramValue, String paramName) {
