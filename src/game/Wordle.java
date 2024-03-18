@@ -21,100 +21,92 @@ public class Wordle {
         var guesses = guess.toCharArray();
 
         IntStream.range(0, 5).limit(5).forEach( i -> {
-            compute(targets, guesses, i, results);
+            results[i] = compute(targets, guesses, i);
         });
         return Arrays.stream(results).toList();
     }
 
-    private static void compute(char[] targets, char[] guesses, int position, MatchLetter[] results ) {
+    private static MatchLetter compute(char[] targets, char[] guesses, int position ) {
         Map<String, List<String>> guessCharacterLists = groupCharacters(guesses);
-        System.out.println("guessCharacterLists = " + guessCharacterLists);
         Map<String, List<String>> targetCharacterLists = groupCharacters(targets);
-        System.out.println("targetCharacterLists = " + targetCharacterLists);
-        System.out.println("treating character " + guesses[position] + "  --- At position : " + position );
-        System.out.println(" guess info : " +  guessCharacterLists.get( guesses[position] + ""));
-        System.out.println(" target info : " + targetCharacterLists.get( guesses[position] + ""));
-       /* {s=[s:0], i=[i:2], k=[k:1], l=[l:3, l:4]} */
-       /* {c=[c:0], v=[v:2], i=[i:1, i:3], l=[l:4]} */
-       /* if ( targetCharacterLists.get( guesses[position] + "") == null ) {
-            System.out.println("Will set the result to NO_MATCH");
-            results[position] = NO_MATCH;
-            return;
-        } else */
+       /* System.out.println("guessCharacterLists = " + guessCharacterLists);
+        System.out.println("targetCharacterLists = " + targetCharacterLists);*/
+
+
         if ( targetCharacterLists.get( guesses[position] + "") == null )
-            return;
+            return NO_MATCH;
         if ( guessCharacterLists.get( guesses[position] + "").size() ==  targetCharacterLists.get( guesses[position] + "").size()
         && guessCharacterLists.get( guesses[position] + "").size() == 1) {
             System.out.println("Same Size 1 :" + guessCharacterLists.get(guesses[position] + "").size());
             if ( guessCharacterLists.get( guesses[position] + "").equals(targetCharacterLists.get( guesses[position] + "")) ) {
-                results[position] = EXACT_MATCH;
-                return;
+                return EXACT_MATCH;
             }
             else {
-                results[position] = PARTIAL_MATCH;
-                return;
+                return PARTIAL_MATCH;
             }
         }
         if ( guessCharacterLists.get( guesses[position] + "").size() ==  targetCharacterLists.get( guesses[position] + "").size() ) {
-            System.out.println("Same Size :" + guessCharacterLists.get( guesses[position] + "").size());
+            MatchLetter[] willReturn = new MatchLetter[]{PARTIAL_MATCH, PARTIAL_MATCH};
             for (int i = 0; i < guessCharacterLists.get( guesses[position] + "").size(); i++) {
-                if ( targetCharacterLists.get( guesses[position] + "").contains( guessCharacterLists.get( guesses[position] + "").get(i))
-                 ) {
-                    System.out.println("Same Size :" + "EXACT");
-                    results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").get(i).split(":")[1])] = EXACT_MATCH;
-                    System.out.println("results22 EXACT = " + Arrays.toString(results));
-                }
-                else {
-                    System.out.println("Same Size :" + "PARTIAL" + " @Position " + Integer.parseInt(guessCharacterLists.get(guesses[position] + "").get(i).split(":")[1]));
-                    results[Integer.parseInt(guessCharacterLists.get(guesses[position] + "").get(i).split(":")[1])] = PARTIAL_MATCH;
-                    System.out.println("results 22 PARTIAL = " + Arrays.toString(results));
+                for (int j = 0; j < targetCharacterLists.get( guesses[position] + "").size() ; j++) {
+                    if ( guessCharacterLists.get( guesses[position] + "").get(i).equals( targetCharacterLists.get( guesses[position] + "").get(j))
+                    ) {
+                            willReturn[i] = EXACT_MATCH;
+                    }
                 }
             }
-           // results[position] = EXACT_MATCH;
-            return;
+            if ( position == Integer.parseInt(guessCharacterLists.get(guesses[position] + "").getFirst().split(":")[1]))
+                return willReturn[0];
+            else return willReturn[1];
         }
         else {
-
             if ( guessCharacterLists.get( guesses[position] + "").size() == 2 && targetCharacterLists.get( guesses[position] + "").size() == 1 ) {
-                System.out.println("2-1");
-                 if ( guessCharacterLists.get( guesses[position] + "").getFirst().equals(targetCharacterLists.get( guesses[position] + "").getFirst()) )
-                 {
-                     System.out.println("2-1a Will set the result to EXACT_MATCH");
-                     results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getFirst().split(":")[1])] = EXACT_MATCH;
-                     return;
-                 }
-                if ( guessCharacterLists.get( guesses[position] + "").getLast().equals(targetCharacterLists.get( guesses[position] + "").getLast()) )
-                {
-                    System.out.println("2-1b Will set the result to EXACT_MATCH");
-                    results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1])] = EXACT_MATCH;
-                    return;
+                System.out.println("2-1 @Position : " + position );
+                System.out.println("2-1 guess  : " + guessCharacterLists.get( guesses[position] + "") );
+                System.out.println("2-1 target  : " + targetCharacterLists.get( targets[position] + "") );
+                if ( guessCharacterLists.get( guesses[position] + "").contains( targetCharacterLists.get( targets[position] + "").getFirst()) ) {
+                    if ( guessCharacterLists.get( guesses[position] + "").getFirst().equals(targetCharacterLists.get( targets[position] + "").getFirst()) )
+                    {
+                        System.out.println("2-1a Will set the result to EXACT_MATCH @Position: " + position);
+                        //results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getFirst().split(":")[1])] = EXACT_MATCH;
+                        return EXACT_MATCH;
+                    }
+                    else if ( guessCharacterLists.get( guesses[position] + "").getLast().equals(targetCharacterLists.get( targets[position] + "").getFirst()) )
+                    {
+                        System.out.println("2-1b Will set the result to EXACT_MATCH @ Position: " + position);
+                        //results[Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1])] = EXACT_MATCH;
+                        return EXACT_MATCH;
+                    }
                 }
-                System.out.println("Will set the result to PARTIAL_MATCH and NO_MATCH");
-                int positionResultToSet = Integer.parseInt(guessCharacterLists.get(guesses[position] + "").getFirst().split(":")[1]);
-                System.out.println("positionResultToSet = " + positionResultToSet);
-                results[positionResultToSet] = PARTIAL_MATCH;
-                int j = Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1]);
-                results[j] = NO_MATCH;
-                System.out.println("results = " + Arrays.toString(results));
-                return;
 
+                System.out.println("Will set the result to PARTIAL_MATCH or NO_MATCH  @ Position: " + position);
+                int firstPositionResultToSet = Integer.parseInt(guessCharacterLists.get(guesses[position] + "").getFirst().split(":")[1]);
+                System.out.println("positionResultToSet = " + firstPositionResultToSet);
+               // results[positionResultToSet] = PARTIAL_MATCH;
+                int secondPositionResultToSet = Integer.parseInt(guessCharacterLists.get( guesses[position] + "").getLast().split(":")[1]);
+                System.out.println("secondPositionResultToSet = " + secondPositionResultToSet);
+               // results[secondPositionResultToSetj] = NO_MATCH;
+                if ( position < secondPositionResultToSet) {
+                    System.out.println("Will set the result to PARTIAL_MATCH  @ Position: " + position);
+                    return PARTIAL_MATCH;
+                }
+                else {
+                    System.out.println("Will set the result to NO_MATCH  @ Position: " + position);
+                    return NO_MATCH;
+                }
             }
             if ( guessCharacterLists.get( guesses[position] + "").size() == 1 && targetCharacterLists.get( guesses[position] + "").size() == 2 ) {
                 if ( targetCharacterLists.get( guesses[position] + "").contains( guessCharacterLists.get( guesses[position] + "").getFirst())) {
                     System.out.println("1-2 Will set the result to EXACT_MATCH");
-                    results[position] = EXACT_MATCH;
-                    return;
+                    return  EXACT_MATCH;
                 }
                 else {
                     System.out.println("1-2 Will set the result to PARTIAL MATCH");
-                    results[position] = PARTIAL_MATCH;
-                    return ;
+                    return  PARTIAL_MATCH;
                 }
-
             }
         }
-
-
+        return null;
     }
 
     private static Map<String, List<String>> groupCharacters(char[] guesses) {
