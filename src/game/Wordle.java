@@ -12,9 +12,9 @@ public class Wordle {
     private static final int WORD_SIZE = 5;
     private static final int TWO_SIZE = 2;
     private static final int ONE_SIZE = 1;
-    private static final BiPredicate<List<String>, List<String>> isExactMany = (g, t) -> g.size() == t.size();
-    private static final BiPredicate<List<String>, List<String>> isTwoOne = (g, t) -> g.size() == TWO_SIZE && t.size() == ONE_SIZE;
-    private static final BiPredicate<List<String>, List<String>> isOneTwo = (g, t) -> g.size() == ONE_SIZE && t.size() == TWO_SIZE;
+    private static final BiPredicate<List<String>, List<String>> isExactMany = (guesses, targets) -> guesses.size() == targets.size();
+    private static final BiPredicate<List<String>, List<String>> isTwoOne = (guesses, targets) -> guesses.size() == TWO_SIZE && targets.size() == ONE_SIZE;
+    private static final BiPredicate<List<String>, List<String>> isOneTwo = (guesses, targets) -> guesses.size() == ONE_SIZE && targets.size() == TWO_SIZE;
 
     public static List<MatchLetter> evaluate(String target, String guess) {
         validateParameters(target, "Target");
@@ -51,7 +51,7 @@ public class Wordle {
 
     private static MatchLetter applyRulesForExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
 
-        return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
+            return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
     }
 
     private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
