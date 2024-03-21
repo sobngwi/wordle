@@ -12,6 +12,9 @@ public class Wordle {
     private static final int WORD_SIZE = 5;
     private static final int TWO_SIZE = 2;
     private static final int ONE_SIZE = 1;
+    private static final BiPredicate<List<String>, List<String>> isExactMany = (g, t) -> g.size() == t.size();
+    private static final BiPredicate<List<String>, List<String>> isTwoOne = (g, t) -> g.size() == TWO_SIZE && t.size() == ONE_SIZE;
+    private static final BiPredicate<List<String>, List<String>> isOneTwo = (g, t) -> g.size() == ONE_SIZE && t.size() == TWO_SIZE;
 
     public static List<MatchLetter> evaluate(String target, String guess) {
         validateParameters(target, "Target");
@@ -21,7 +24,7 @@ public class Wordle {
             return List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
 
         return IntStream.range(0, WORD_SIZE)
-                .mapToObj(position -> computeMatching( target, guess, position))
+                .mapToObj(position -> computeMatching(target, guess, position))
                 .toList();
     }
 
@@ -36,33 +39,41 @@ public class Wordle {
         if (targetMatchingCharacters == null)
             return NO_MATCH;
 
-        BiPredicate<List<String>, List<String>> isExactMany = (g, t) -> g.size() == t.size();
-        BiPredicate<List<String>, List<String>> isTwoOne = (g, t) -> g.size() == TWO_SIZE && t.size() == ONE_SIZE;
-        BiPredicate<List<String>, List<String>> isOneTwo = (g, t) -> g.size() == ONE_SIZE && t.size() == TWO_SIZE;
         List<String> guessCharacters = guessCharacterLists.get(guessKey);
         final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetMatchingCharacters);
-        final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters, isTwoOne);
-        final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetMatchingCharacters, isOneTwo);
+        final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters);
+        final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetMatchingCharacters);
 
-        if (exactOrPartialMatchMatch != null)
-            return exactOrPartialMatchMatch;
-        else if (isExactMany.test(guessCharacters, targetMatchingCharacters))
+        return (exactOrPartialMatchMatch == null) ?
+                applyRulesForNonExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult)
+                : applyRulesForExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult);
+    }
+
+    private static MatchLetter applyRulesForExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
+
+        return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
+    }
+
+    private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
+
+        if (isExactMany.test(guessCharacters, targetMatchingCharacters))
             return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
         else
             return Objects.requireNonNullElseGet(twoOneMatchResult, () -> Objects.requireNonNullElse(oneTwoMatchResult, NO_MATCH));
     }
+
     private static MatchLetter computeOneToOneRule(List<String> guessCharacters, List<String> targetCharacters) {
         return oneToOneMatchingRule(guessCharacters, targetCharacters);
     }
 
-    private static MatchLetter computeOneTwoRule(List<String> guessCharacters, List<String> targetCharacters, BiPredicate<List<String>, List<String>> isOneTwo) {
-        if (isOneTwo.test(guessCharacters, targetCharacters))
+    private static MatchLetter computeOneTwoRule(List<String> guessCharacters, List<String> targetCharacters) {
+        if (Wordle.isOneTwo.test(guessCharacters, targetCharacters))
             return oneTwoRule(guessCharacters, targetCharacters);
         return null;
     }
 
-    private static MatchLetter computeTwoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters, BiPredicate<List<String>, List<String>> isTwoOne) {
-        if (isTwoOne.test(guessCharacters, targetCharacters)) {
+    private static MatchLetter computeTwoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
+        if (Wordle.isTwoOne.test(guessCharacters, targetCharacters)) {
             return twoOneRule(position, guessCharacters, targetCharacters);
         }
         return null;
@@ -84,14 +95,27 @@ public class Wordle {
         int firstTargetPosition = Integer.parseInt(firstTargetIndex.split(":")[1]);
         final boolean areIndexesAndPositionMatch = firstGuessIndex.equals(firstTargetIndex) && position == firstGuestCharacterPosition || lastGuessIndex.equals(firstTargetIndex) && position == lastGuestCharacterPosition;
 
+        final MatchLetter exactMatch = executeTwoMatchRuleExactMatch(guessCharacters, firstTargetIndex, areIndexesAndPositionMatch);
+        if (exactMatch != null)
+            return exactMatch;
+        return
+                executeTwoMatchRulePartialMatch(position, firstGuestCharacterPosition, firstTargetPosition);
+    }
+
+    private static MatchLetter executeTwoMatchRulePartialMatch(int position, int firstGuestCharacterPosition, int firstTargetPosition) {
+        if (position == firstGuestCharacterPosition && firstTargetPosition > position)
+            return PARTIAL_MATCH;
+        else
+            return NO_MATCH;
+    }
+
+    private static MatchLetter executeTwoMatchRuleExactMatch(List<String> guessCharacters, String firstTargetIndex, boolean areIndexesAndPositionMatch) {
         if (guessCharacters.contains(firstTargetIndex)) {
             if (areIndexesAndPositionMatch)
                 return EXACT_MATCH;
             else return NO_MATCH;
-        } else if (position == firstGuestCharacterPosition && firstTargetPosition > position)
-            return PARTIAL_MATCH;
-        else
-            return NO_MATCH;
+        }
+        return null;
     }
 
     private static MatchLetter exactManyToManyRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
