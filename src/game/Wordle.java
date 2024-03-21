@@ -21,11 +21,13 @@ public class Wordle {
             return List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
 
         return IntStream.range(0, WORD_SIZE)
-                .mapToObj(position -> computeMatching(target.toCharArray(), guess.toCharArray(), position))
+                .mapToObj(position -> computeMatching( target, guess, position))
                 .toList();
     }
 
-    private static MatchLetter computeMatching(char[] targets, char[] guesses, int position) {
+    private static MatchLetter computeMatching(String target, String guess, int position) {
+        var targets = target.toCharArray();
+        var guesses = guess.toCharArray();
         Map<String, List<String>> guessCharacterLists = groupCharacters(guesses);
         Map<String, List<String>> targetCharacterLists = groupCharacters(targets);
         String guessKey = guesses[position] + "";
@@ -34,9 +36,9 @@ public class Wordle {
         if (targetMatchingCharacters == null)
             return NO_MATCH;
 
-        BiPredicate<List<String>, List<String>> isExactMany = (guess, target) -> guess.size() == target.size();
-        BiPredicate<List<String>, List<String>> isTwoOne = (guess, target) -> guess.size() == TWO_SIZE && target.size() == ONE_SIZE;
-        BiPredicate<List<String>, List<String>> isOneTwo = (guess, target) -> guess.size() == ONE_SIZE && target.size() == TWO_SIZE;
+        BiPredicate<List<String>, List<String>> isExactMany = (g, t) -> g.size() == t.size();
+        BiPredicate<List<String>, List<String>> isTwoOne = (g, t) -> g.size() == TWO_SIZE && t.size() == ONE_SIZE;
+        BiPredicate<List<String>, List<String>> isOneTwo = (g, t) -> g.size() == ONE_SIZE && t.size() == TWO_SIZE;
         List<String> guessCharacters = guessCharacterLists.get(guessKey);
         final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetMatchingCharacters);
         final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters, isTwoOne);
@@ -49,7 +51,6 @@ public class Wordle {
         else
             return Objects.requireNonNullElseGet(twoOneMatchResult, () -> Objects.requireNonNullElse(oneTwoMatchResult, NO_MATCH));
     }
-
     private static MatchLetter computeOneToOneRule(List<String> guessCharacters, List<String> targetCharacters) {
         return oneToOneMatchingRule(guessCharacters, targetCharacters);
     }
@@ -75,16 +76,16 @@ public class Wordle {
     }
 
     private static MatchLetter twoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
-        String guessFirstIndex = guessCharacters.getFirst();
-        int firstGuestCharacterPosition = Integer.parseInt(guessFirstIndex.split(":")[1]);
+        String firstGuessIndex = guessCharacters.getFirst();
+        int firstGuestCharacterPosition = Integer.parseInt(firstGuessIndex.split(":")[1]);
         String lastGuessIndex = guessCharacters.getLast();
         int lastGuestCharacterPosition = Integer.parseInt(lastGuessIndex.split(":")[1]);
         String firstTargetIndex = targetCharacters.getFirst();
         int firstTargetPosition = Integer.parseInt(firstTargetIndex.split(":")[1]);
-        final boolean isIndexesAndPositionMatch = guessFirstIndex.equals(firstTargetIndex) && position == firstGuestCharacterPosition || lastGuessIndex.equals(firstTargetIndex) && position == lastGuestCharacterPosition;
+        final boolean areIndexesAndPositionMatch = firstGuessIndex.equals(firstTargetIndex) && position == firstGuestCharacterPosition || lastGuessIndex.equals(firstTargetIndex) && position == lastGuestCharacterPosition;
 
         if (guessCharacters.contains(firstTargetIndex)) {
-            if (isIndexesAndPositionMatch)
+            if (areIndexesAndPositionMatch)
                 return EXACT_MATCH;
             else return NO_MATCH;
         } else if (position == firstGuestCharacterPosition && firstTargetPosition > position)
@@ -115,8 +116,7 @@ public class Wordle {
     }
 
     private static MatchLetter oneToOneMatchingRule(List<String> guessCharacters, List<String> targetCharacters) {
-        if (guessCharacters.size() == targetCharacters.size()
-                && guessCharacters.size() == 1) {
+        if (guessCharacters.size() == targetCharacters.size() && guessCharacters.size() == ONE_SIZE) {
             if (guessCharacters.equals(targetCharacters)) {
                 return EXACT_MATCH;
             } else {
