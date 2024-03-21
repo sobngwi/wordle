@@ -46,10 +46,10 @@ public class Wordle {
 
         return (exactOrPartialMatchMatch == null) ?
                 applyRulesForNonExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult)
-                : applyRulesForExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult);
+                : applyRulesForExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters);
     }
 
-    private static MatchLetter applyRulesForExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
+    private static MatchLetter applyRulesForExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
 
             return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
     }
