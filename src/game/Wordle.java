@@ -1,13 +1,16 @@
 package game;
 
+import org.apache.commons.lang3.function.TriFunction;
+
 import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static game.MatchLetter.*;
+import static game.Wordle.Status.*;
 
-public class Wordle {
+public class Wordle{
 
     private static final int WORD_SIZE = 5;
     private static final int TWO_SIZE = 2;
@@ -15,6 +18,70 @@ public class Wordle {
     private static final BiPredicate<List<String>, List<String>> isExactMany = (guesses, targets) -> guesses.size() == targets.size();
     private static final BiPredicate<List<String>, List<String>> isTwoOne = (guesses, targets) -> guesses.size() == TWO_SIZE && targets.size() == ONE_SIZE;
     private static final BiPredicate<List<String>, List<String>> isOneTwo = (guesses, targets) -> guesses.size() == ONE_SIZE && targets.size() == TWO_SIZE;
+    private static final  List<MatchLetter> exactMatchAll =  List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
+    private static final  String AMAZING_MESSAGE = "Amazing";
+    private static final  String SPLENDID_MESSAGE = "Splendid";
+    private static final  String AWSOME_MESSAGE = "Awesome";
+    private static final  String YAY_MESSAGE = "Yay";
+    private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
+        if (isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(numberOfTries, evaluateResult)) {
+            if (numberOfTries == 0)
+                return new Response(retryCounter, WON, evaluateResult, AMAZING_MESSAGE);
+            else if (numberOfTries == 1)
+                return new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE);
+            else if ((numberOfTries == 2))
+                return new Response(retryCounter, WON, evaluateResult, AWSOME_MESSAGE);
+            else return new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE);
+        } else
+            return (retryCounter < 6) ?
+                    new Response(retryCounter, INPROGRESS, evaluateResult, ""):
+                    new Response(retryCounter, LOST, evaluateResult, "");
+    };
+
+    private static class  ExactOrPartialMatchMatchInfo{
+        private final int position;
+        private final List<String> guessCharacters;
+        private final List<String> targetMatchingCharacters;
+        private final MatchLetter twoOneMatchResult;
+        private final MatchLetter oneTwoMatchResult;
+
+        public ExactOrPartialMatchMatchInfo
+                (int position, List<String> guessCharacters,
+                 List<String> targetMatchingCharacters,
+                 MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
+            this.position = position;
+            this.guessCharacters = guessCharacters;
+            this.targetMatchingCharacters = targetMatchingCharacters;
+            this.twoOneMatchResult = twoOneMatchResult;
+            this.oneTwoMatchResult = oneTwoMatchResult;
+        }
+
+        public ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
+            this(position, guessCharacters, targetMatchingCharacters, null, null);
+        }
+    }
+    public static enum Status {
+        WON,
+        INPROGRESS,
+        LOST
+    }
+    public  record  Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult ){}
+    public static Response play(final String target, final String guess, final int numberOfTries){
+        final List<MatchLetter> evaluateResult = evaluate(target, guess);
+
+        int retryCounter = numberOfTries + 1;
+
+        return integerListIntegerResponseTriFunction.apply(numberOfTries, evaluateResult, retryCounter);
+    }
+
+    private static boolean isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(int numberOfTries, List<MatchLetter> evaluateResult) {
+        return evaluateResult.stream()
+                .allMatch(matchResult -> matchResult == EXACT_MATCH
+                          && (numberOfTries == 0 || numberOfTries == 1
+                          || numberOfTries == 2 || numberOfTries == 3
+                          || numberOfTries == 4  || numberOfTries == 5 ));
+    }
+
 
     public static List<MatchLetter> evaluate(String target, String guess) {
         validateParameters(target, "Target");
@@ -49,15 +116,11 @@ public class Wordle {
                 applyRulesForNonExactOrPartialMatchMatch(nonExactOrPartialMatchMatchInfo)
                 : applyRulesForExactOrPartialMatchMatch(exactOrPartialMatchMatchInfo1);
     }
-    private record ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult ){
-        public ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
-            this(position, guessCharacters, targetMatchingCharacters, null, null);
-        }
-    }
+
 
     private static MatchLetter applyRulesForExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
 
-            return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
+        return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
     }
 
     private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
