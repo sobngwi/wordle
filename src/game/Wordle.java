@@ -43,23 +43,29 @@ public class Wordle {
         final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetMatchingCharacters);
         final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters);
         final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetMatchingCharacters);
-
+        final ExactOrPartialMatchMatchInfo nonExactOrPartialMatchMatchInfo = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult);
+        final ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo1 = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetMatchingCharacters);
         return (exactOrPartialMatchMatch == null) ?
-                applyRulesForNonExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult)
-                : applyRulesForExactOrPartialMatchMatch(position, guessCharacters, targetMatchingCharacters);
+                applyRulesForNonExactOrPartialMatchMatch(nonExactOrPartialMatchMatchInfo)
+                : applyRulesForExactOrPartialMatchMatch(exactOrPartialMatchMatchInfo1);
+    }
+    private record ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult ){
+        public ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
+            this(position, guessCharacters, targetMatchingCharacters, null, null);
+        }
     }
 
-    private static MatchLetter applyRulesForExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
+    private static MatchLetter applyRulesForExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
 
-            return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
+            return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
     }
 
-    private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters, MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
+    private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
 
-        if (isExactMany.test(guessCharacters, targetMatchingCharacters))
-            return exactManyToManyRule(position, guessCharacters, targetMatchingCharacters);
+        if (isExactMany.test(exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters))
+            return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
         else
-            return Objects.requireNonNullElseGet(twoOneMatchResult, () -> Objects.requireNonNullElse(oneTwoMatchResult, NO_MATCH));
+            return Objects.requireNonNullElseGet(exactOrPartialMatchMatchInfo.twoOneMatchResult, () -> Objects.requireNonNullElse(exactOrPartialMatchMatchInfo.oneTwoMatchResult, NO_MATCH));
     }
 
     private static MatchLetter computeOneToOneRule(List<String> guessCharacters, List<String> targetCharacters) {
