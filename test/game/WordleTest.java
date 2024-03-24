@@ -1,7 +1,14 @@
 package game;
 
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
@@ -11,10 +18,12 @@ import static game.Wordle.evaluate;
 import static game.Wordle.play;
 import static game.Wordle.Response;
 import static game.Wordle.Status.*;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.*;
 
 public class WordleTest {
 
@@ -40,6 +49,12 @@ public class WordleTest {
 
     @Nested
     class Play{
+        private Wordle.SpellChecker spellChecker = guess -> true;
+
+        @BeforeEach
+        void init(){
+            Wordle.setSpellCheckerService(spellChecker);
+        }
         @Test
         void playFirstAttemptWithWinningGuess(){
             var response = play("FAVOR", "FAVOR", 0);
@@ -151,6 +166,66 @@ public class WordleTest {
             assertEquals("Game Over", ex.getMessage());
         }
 
+    }
+
+
+    @Nested
+    @ExtendWith(MockitoExtension.class)
+    class PlayWithDoubles{
+        @Mock
+        private Wordle.SpellChecker spellChecker;
+
+        @BeforeEach
+        void init(){
+            Wordle.setSpellCheckerService(spellChecker);
+        }
+        @Test
+        void playFirstAttemptWithCorrectSpellingForGuess(){
+            when(spellChecker.isSpellingCorrect(anyString())).thenReturn(true);
+
+            var response = play("FAVOR", "RIVER", 0);
+
+            assertEquals(
+                    new Response(1, INPROGRESS, List.of(NO_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), ""),
+                    response);
+
+            verify(spellChecker, times(1)).isSpellingCorrect("RIVER");
+        }
+        @Test
+        void playFirstAttemptWithIncorrectSpellingForGuess(){
+            when(spellChecker.isSpellingCorrect("RIVRE")).thenReturn(false);
+
+            var response = play("FAVOR", "RIVRE", 0);
+
+            assertEquals(
+                    new Response(0, WRONGSPELLING, List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), "Incorrect spelling"),
+                    response);
+
+            verify(spellChecker, times(1)).isSpellingCorrect("RIVRE");
+        }
+        @Test
+        void playSecondAttemptWithIncorrectSpellingForGuess(){
+            when(spellChecker.isSpellingCorrect("RIVER")).thenReturn(false);
+
+            var response = play("FAVOR", "RIVER", 1);
+
+            assertEquals(
+                    new Response(1, WRONGSPELLING, List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), "Incorrect spelling"),
+                    response);
+
+            verify(spellChecker, times(1)).isSpellingCorrect("RIVER");
+        }
+        @Test
+        void playSecondAttemptWithFailureToCheckSpelling(){
+            when(spellChecker.isSpellingCorrect("RIVER")).thenThrow(new RuntimeException("Network failure"));
+
+            var ex =
+                    assertThrows(RuntimeException.class, () -> play("FAVOR", "RIVER", 1));
+
+            assertEquals("Network failure", ex.getMessage());
+
+            verify(spellChecker, times(1)).isSpellingCorrect("RIVER");
+        }
     }
 
 }

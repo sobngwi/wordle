@@ -10,7 +10,7 @@ import java.util.stream.IntStream;
 import static game.MatchLetter.*;
 import static game.Wordle.Status.*;
 
-public class Wordle{
+public class Wordle {
 
     private static final int WORD_SIZE = 5;
     private static final int TWO_SIZE = 2;
@@ -18,11 +18,12 @@ public class Wordle{
     private static final BiPredicate<List<String>, List<String>> isExactMany = (guesses, targets) -> guesses.size() == targets.size();
     private static final BiPredicate<List<String>, List<String>> isTwoOne = (guesses, targets) -> guesses.size() == TWO_SIZE && targets.size() == ONE_SIZE;
     private static final BiPredicate<List<String>, List<String>> isOneTwo = (guesses, targets) -> guesses.size() == ONE_SIZE && targets.size() == TWO_SIZE;
-    private static final  List<MatchLetter> exactMatchAll =  List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
-    private static final  String AMAZING_MESSAGE = "Amazing";
-    private static final  String SPLENDID_MESSAGE = "Splendid";
-    private static final  String AWSOME_MESSAGE = "Awesome";
-    private static final  String YAY_MESSAGE = "Yay";
+    private static final List<MatchLetter> exactMatchAll = List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
+    private static final List<MatchLetter> allNoMatches = List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH);
+    private static final String AMAZING_MESSAGE = "Amazing";
+    private static final String SPLENDID_MESSAGE = "Splendid";
+    private static final String AWSOME_MESSAGE = "Awesome";
+    private static final String YAY_MESSAGE = "Yay";
     private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
         if (isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(numberOfTries, evaluateResult)) {
             if (numberOfTries == 0)
@@ -34,11 +35,21 @@ public class Wordle{
             else return new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE);
         } else
             return (retryCounter < 6) ?
-                    new Response(retryCounter, INPROGRESS, evaluateResult, ""):
+                    new Response(retryCounter, INPROGRESS, evaluateResult, "") :
                     new Response(retryCounter, LOST, evaluateResult, "");
     };
 
-    private static class  ExactOrPartialMatchMatchInfo{
+    public interface SpellChecker {
+        boolean isSpellingCorrect(String guess);
+    }
+
+    private static SpellChecker spellChecker;
+
+    public static void setSpellCheckerService(SpellChecker aSpellChecker) {
+        spellChecker = aSpellChecker;
+    }
+
+    private static class ExactOrPartialMatchMatchInfo {
         private final int position;
         private final List<String> guessCharacters;
         private final List<String> targetMatchingCharacters;
@@ -60,17 +71,27 @@ public class Wordle{
             this(position, guessCharacters, targetMatchingCharacters, null, null);
         }
     }
+
     public static enum Status {
         WON,
         INPROGRESS,
+        WRONGSPELLING,
         LOST
     }
-    public  record  Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult ){}
-    public static Response play(final String target, final String guess, final int numberOfTries){
-        if ( numberOfTries >= 6)
-            throw new RuntimeException("Game Over");
-        final List<MatchLetter> evaluateResult = evaluate(target, guess);
 
+    public record Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult) {
+    }
+
+    public static Response play(final String target, final String guess, final int numberOfTries) {
+        if (numberOfTries >= 6)
+            throw new RuntimeException("Game Over");
+
+        boolean spellCheckResult = spellChecker.isSpellingCorrect(guess);
+        if (!spellCheckResult) {
+            return new Response(numberOfTries, WRONGSPELLING, allNoMatches, "Incorrect spelling");
+        }
+
+        final List<MatchLetter> evaluateResult = evaluate(target, guess);
         int retryCounter = numberOfTries + 1;
 
         return integerListIntegerResponseTriFunction.apply(numberOfTries, evaluateResult, retryCounter);
@@ -79,9 +100,9 @@ public class Wordle{
     private static boolean isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(int numberOfTries, List<MatchLetter> evaluateResult) {
         return evaluateResult.stream()
                 .allMatch(matchResult -> matchResult == EXACT_MATCH
-                          && (numberOfTries == 0 || numberOfTries == 1
-                          || numberOfTries == 2 || numberOfTries == 3
-                          || numberOfTries == 4  || numberOfTries == 5 ));
+                        && (numberOfTries == 0 || numberOfTries == 1
+                        || numberOfTries == 2 || numberOfTries == 3
+                        || numberOfTries == 4 || numberOfTries == 5));
     }
 
 
@@ -90,7 +111,7 @@ public class Wordle{
         validateParameters(guess, "Guess");
 
         if (guess.equals(target))
-            return List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
+            return exactMatchAll;
 
         return IntStream.range(0, WORD_SIZE)
                 .mapToObj(position -> computeMatching(target, guess, position))
