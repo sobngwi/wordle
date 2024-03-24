@@ -1,9 +1,9 @@
 package game;
 
-import org.apache.commons.lang3.function.TriFunction;
 
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -24,6 +24,10 @@ public class Wordle {
     private static final String SPLENDID_MESSAGE = "Splendid";
     private static final String AWSOME_MESSAGE = "Awesome";
     private static final String YAY_MESSAGE = "Yay";
+    @FunctionalInterface
+    public interface TriFunction<T, U, V, R> {
+        R apply(T t, U u, V v);
+    }
     private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
         if (isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(numberOfTries, evaluateResult)) {
             if (numberOfTries == 0)
