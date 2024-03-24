@@ -67,6 +67,8 @@ public class Wordle{
     }
     public  record  Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult ){}
     public static Response play(final String target, final String guess, final int numberOfTries){
+        if ( numberOfTries >= 6)
+            throw new RuntimeException("Game Over");
         final List<MatchLetter> evaluateResult = evaluate(target, guess);
 
         int retryCounter = numberOfTries + 1;
