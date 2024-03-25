@@ -28,10 +28,25 @@
         <property name="problemDepth" value="2" />
     </properties>
   </rule>
+  <rule ref="category/java/design.xml/CouplingBetweenObjects">
+    <properties>
+        <property name="threshold" value="5" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/ExcessiveImports">
+    <properties>
+        <property name="minimum" value="15" />
+    </properties>
+  </rule>
+ 
   <rule ref="category/java/design.xml/AvoidRethrowingException" />
   <rule ref="category/java/design.xml/AvoidThrowingNewInstanceOfSameException" />
   <rule ref="category/java/design.xml/AvoidThrowingNullPointerException" />
   <rule ref="category/java/design.xml/AvoidUncheckedExceptionsInSignatures" />
   <rule ref="category/java/design.xml/ClassWithOnlyPrivateConstructorsShouldBeFinal" />
+  <rule ref="category/java/design.xml/CollapsibleIfStatements" />
+  <rule ref="category/java/design.xml/DataClass" />
+  <rule ref="category/java/design.xml/DoNotExtendJavaLangError" />
+  <rule ref="category/java/design.xml/ExceptionAsFlowControl" />
 
 </ruleset>

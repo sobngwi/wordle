@@ -29,7 +29,7 @@ public class Wordle {
     private static SpellChecker spellChecker;
 
     @FunctionalInterface
-    public interface TriFunction<T, U, V, R> {
+    private interface TriFunction<T, U, V, R> {
         R apply(T t, U u, V v);
     }
 
@@ -58,30 +58,19 @@ public class Wordle {
         spellChecker = aSpellChecker;
     }
 
-    private static class ExactOrPartialMatchMatchInfo {
-        private final int position;
-        private final List<String> guessCharacters;
-        private final List<String> targetMatchingCharacters;
-        private final MatchLetter twoOneMatchResult;
-        private final MatchLetter oneTwoMatchResult;
-
-        public ExactOrPartialMatchMatchInfo
-                (int position, List<String> guessCharacters,
-                 List<String> targetMatchingCharacters,
-                 MatchLetter twoOneMatchResult, MatchLetter oneTwoMatchResult) {
-            this.position = position;
-            this.guessCharacters = guessCharacters;
-            this.targetMatchingCharacters = targetMatchingCharacters;
-            this.twoOneMatchResult = twoOneMatchResult;
-            this.oneTwoMatchResult = oneTwoMatchResult;
-        }
+    private record ExactOrPartialMatchMatchInfo (
+         int position,
+         List<String> guessCharacters,
+         List<String> targetMatchingCharacters,
+         MatchLetter twoOneMatchResult,
+         MatchLetter oneTwoMatchResult){
 
         public ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
             this(position, guessCharacters, targetMatchingCharacters, null, null);
         }
     }
 
-    public enum Status {
+     public enum Status {
         WON,
         INPROGRESS,
         WRONGSPELLING,
