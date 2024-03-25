@@ -32,12 +32,13 @@ public class Wordle {
     public interface TriFunction<T, U, V, R> {
         R apply(T t, U u, V v);
     }
+
     private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
         Map<Integer, Response> winResponses = new HashMap<>();
         winResponses.putIfAbsent(0, new Response(retryCounter, WON, evaluateResult, AMAZING_MESSAGE));
         winResponses.putIfAbsent(1, new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE));
         winResponses.putIfAbsent(2, new Response(retryCounter, WON, evaluateResult, AWESOME_MESSAGE));
-        winResponses.putIfAbsent(3,new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
+        winResponses.putIfAbsent(3, new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
 
         Map<Integer, Response> inProgressLostResponses = new HashMap<>();
         inProgressLostResponses.putIfAbsent(1, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
@@ -80,7 +81,7 @@ public class Wordle {
         }
     }
 
-    public static enum Status {
+    public enum Status {
         WON,
         INPROGRESS,
         WRONGSPELLING,
@@ -219,28 +220,33 @@ public class Wordle {
     }
 
     private static MatchLetter exactManyToManyRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
-        MatchLetter[] willReturn = new MatchLetter[]{PARTIAL_MATCH, PARTIAL_MATCH};
-        computeTheManyToManyExactRule(guessCharacters, targetCharacters, willReturn);
+        List<MatchLetter> willReturn = computeTheManyToManyExactRule(guessCharacters, targetCharacters);
         boolean isPositionMatchTheFirstGuessIndex = position == Integer.parseInt(guessCharacters.getFirst().split(":")[1]);
         if (isPositionMatchTheFirstGuessIndex)
-            return willReturn[0];
+            return willReturn.getFirst();
         else
-            return willReturn[1];
+            return willReturn.getLast();
     }
 
-    private static void computeTheManyToManyExactRule(List<String> guessCharacters, List<String> targetCharacters, MatchLetter[] willReturn) {
+    private static List<MatchLetter> computeTheManyToManyExactRule(List<String> guessCharacters, List<String> targetCharacters) {
+        List<MatchLetter> matchLetters = Arrays.asList(PARTIAL_MATCH, PARTIAL_MATCH);
+        Map<Integer, List<MatchLetter>> exactMatchers = new HashMap<>();
         for (int i = 0; i < guessCharacters.size(); i++) {
-            for (String targetCharacter : targetCharacters) {
-                if (guessCharacters.get(i).equals(targetCharacter)) {
-                    willReturn[i] = EXACT_MATCH;
-                    break;
-                }
-            }
+            final int index = i;
+            exactMatchers = targetCharacters.stream()
+                    .filter(targetCharacter -> targetCharacter.equals(guessCharacters.get(index)))
+                    .limit(1)
+                    .map(x -> EXACT_MATCH)
+                    .collect(Collectors.groupingBy(x -> index));
         }
+        final Optional<Integer> anExactMatcher = exactMatchers.keySet().stream().findFirst();
+        if (anExactMatcher.isPresent())
+            matchLetters.set(anExactMatcher.get(), exactMatchers.get(anExactMatcher.get()).getFirst());
+        return matchLetters;
     }
 
     private static MatchLetter oneToOneMatchingRule(List<String> guessCharacters, List<String> targetCharacters) {
-        if (guessCharacters.size() == targetCharacters.size() && guessCharacters.size() == ONE_SIZE) {
+        if (guessCharacters.size() == targetCharacters.size()) {
             if (guessCharacters.equals(targetCharacters)) {
                 return EXACT_MATCH;
             } else {
@@ -274,10 +280,10 @@ public class Wordle {
 
     public static class AgileDeveloperSpellChecker implements SpellChecker {
 
-         String getResponse(String guess) throws IOException {
+        String getResponse(String guess) throws IOException {
             Objects.requireNonNull(guess);
-           if (guess.equals("gddo"))
-               return "false";
+            if (guess.equals("gddo"))
+                return "false";
             return "true";
         }
 
@@ -286,7 +292,7 @@ public class Wordle {
             try {
                 return Boolean.parseBoolean(getResponse(guess));
             } catch (IOException ioException) {
-               throw new RuntimeException(ioException.getMessage(), ioException);
+                throw new RuntimeException(ioException.getMessage(), ioException);
             }
         }
     }
