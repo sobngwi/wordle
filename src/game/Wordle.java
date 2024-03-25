@@ -84,10 +84,9 @@ public class Wordle {
         if (numberOfTries >= 6)
             throw new RuntimeException(GAME_OVER);
 
-        boolean spellCheckResult = spellChecker.isSpellingCorrect(guess);
-        if (!spellCheckResult) {
+        boolean isCorrectlySpelled = spellChecker.isSpellingCorrect(guess);
+        if (!isCorrectlySpelled)
             return new Response(numberOfTries, WRONGSPELLING, allNoMatches, INCORRECT_SPELLING);
-        }
 
         final List<MatchLetter> evaluateResult = evaluate(target, guess);
         int retryCounter = numberOfTries + 1;
@@ -124,10 +123,18 @@ public class Wordle {
         String guessKey = guesses[position] + "";
 
         List<String> targetMatchingCharacters = targetCharacterLists.get(guessKey);
+        List<String> guessCharacters = guessCharacterLists.get(guessKey);;
+        return computeMatchingAtPosition(position, targetMatchingCharacters, guessCharacters);
+    }
+
+    private static MatchLetter computeMatchingAtPosition(int position, List<String> targetMatchingCharacters, List<String> guessCharacters) {
         if (targetMatchingCharacters == null)
             return NO_MATCH;
+        else
+            return computeExactMatchOrPartialMatch(position, guessCharacters, targetMatchingCharacters);
+    }
 
-        List<String> guessCharacters = guessCharacterLists.get(guessKey);
+    private static MatchLetter computeExactMatchOrPartialMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
         final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetMatchingCharacters);
         final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters);
         final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetMatchingCharacters);

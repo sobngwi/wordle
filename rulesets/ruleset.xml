@@ -38,7 +38,54 @@
         <property name="minimum" value="15" />
     </properties>
   </rule>
- 
+  <rule ref="category/java/design.xml/ExcessivePublicCount">
+    <properties>
+        <property name="minimum" value="5" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/LawOfDemeter">
+    <properties>
+        <property name="trustRadius" value="1" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/LoosePackageCoupling">
+    <properties>
+        <property name="packages" value="game" />
+        <property name="classes" value="" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/NcssCount">
+    <properties>
+        <property name="methodReportLevel" value="6" />
+        <property name="classReportLevel" value="1500" />
+        <property name="ncssOptions" value="" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/NPathComplexity">
+    <properties>
+        <property name="reportLevel" value="5" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/SwitchDensity">
+    <properties>
+        <property name="minimum" value="3" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/TooManyFields">
+    <properties>
+        <property name="maxfields" value="5" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/TooManyMethods">
+    <properties>
+        <property name="maxmethods" value="10" />
+    </properties>
+  </rule>
+  <rule ref="category/java/design.xml/UselessOverridingMethod">
+    <properties>
+        <property name="ignoreAnnotations" value="false" />
+    </properties>
+  </rule>
   <rule ref="category/java/design.xml/AvoidRethrowingException" />
   <rule ref="category/java/design.xml/AvoidThrowingNewInstanceOfSameException" />
   <rule ref="category/java/design.xml/AvoidThrowingNullPointerException" />
@@ -48,5 +95,20 @@
   <rule ref="category/java/design.xml/DataClass" />
   <rule ref="category/java/design.xml/DoNotExtendJavaLangError" />
   <rule ref="category/java/design.xml/ExceptionAsFlowControl" />
+  <rule ref="category/java/design.xml/FinalFieldCouldBeStatic" />
+  <rule ref="category/java/design.xml/GodClass" />
+  <rule ref="category/java/design.xml/ImmutableField" />
+  <rule ref="category/java/design.xml/InvalidJavaBean" />
+  <rule ref="category/java/design.xml/LogicInversion" />
+  <rule ref="category/java/design.xml/MutableStaticState" />
+  <rule ref="category/java/design.xml/SignatureDeclareThrowsException" />
+  <rule ref="category/java/design.xml/SimplifiedTernary" />
+  <rule ref="category/java/design.xml/SimplifyBooleanExpressions" />
+  <rule ref="category/java/design.xml/SimplifyBooleanReturns" />
+  <rule ref="category/java/design.xml/SimplifyConditional" />
+  <rule ref="category/java/design.xml/SingularField" />
+  <rule ref="category/java/design.xml/UseUtilityClass" />
+  
+  
 
 </ruleset>
