@@ -84,6 +84,10 @@ public class Wordle {
         if (numberOfTries >= 6)
             throw new RuntimeException(GAME_OVER);
 
+        return executeThePlayTryInstance(target, guess, numberOfTries);
+    }
+
+    private static Response executeThePlayTryInstance(String target, String guess, int numberOfTries) {
         boolean isCorrectlySpelled = spellChecker.isSpellingCorrect(guess);
         if (!isCorrectlySpelled)
             return new Response(numberOfTries, WRONGSPELLING, allNoMatches, INCORRECT_SPELLING);
