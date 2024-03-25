@@ -1,9 +1,12 @@
 package game;
 
 
-import java.util.*;
+import java.io.IOException;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiPredicate;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -22,8 +25,12 @@ public class Wordle {
     private static final List<MatchLetter> allNoMatches = List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH);
     private static final String AMAZING_MESSAGE = "Amazing";
     private static final String SPLENDID_MESSAGE = "Splendid";
-    private static final String AWSOME_MESSAGE = "Awesome";
+    private static final String AWESOME_MESSAGE = "Awesome";
     private static final String YAY_MESSAGE = "Yay";
+    public static final String GAME_OVER = "Game Over";
+    public static final String INCORRECT_SPELLING = "Incorrect spelling";
+    private static SpellChecker spellChecker;
+
     @FunctionalInterface
     public interface TriFunction<T, U, V, R> {
         R apply(T t, U u, V v);
@@ -35,7 +42,7 @@ public class Wordle {
             else if (numberOfTries == 1)
                 return new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE);
             else if ((numberOfTries == 2))
-                return new Response(retryCounter, WON, evaluateResult, AWSOME_MESSAGE);
+                return new Response(retryCounter, WON, evaluateResult, AWESOME_MESSAGE);
             else return new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE);
         } else
             return (retryCounter < 6) ?
@@ -46,8 +53,6 @@ public class Wordle {
     public interface SpellChecker {
         boolean isSpellingCorrect(String guess);
     }
-
-    private static SpellChecker spellChecker;
 
     public static void setSpellCheckerService(SpellChecker aSpellChecker) {
         spellChecker = aSpellChecker;
@@ -88,11 +93,11 @@ public class Wordle {
 
     public static Response play(final String target, final String guess, final int numberOfTries) {
         if (numberOfTries >= 6)
-            throw new RuntimeException("Game Over");
+            throw new RuntimeException(GAME_OVER);
 
         boolean spellCheckResult = spellChecker.isSpellingCorrect(guess);
         if (!spellCheckResult) {
-            return new Response(numberOfTries, WRONGSPELLING, allNoMatches, "Incorrect spelling");
+            return new Response(numberOfTries, WRONGSPELLING, allNoMatches, INCORRECT_SPELLING);
         }
 
         final List<MatchLetter> evaluateResult = evaluate(target, guess);
@@ -266,5 +271,24 @@ public class Wordle {
     private static void validateNullOrEmptyParamValue(String paramValue, String paramName) {
         if (paramValue == null || paramValue.isEmpty())
             throw new RuntimeException(paramName + " must not be null or empty.");
+    }
+
+    public static class AgileDeveloperSpellChecker implements SpellChecker {
+
+         String getResponse(String guess) throws IOException {
+            Objects.requireNonNull(guess);
+           if (guess.equals("gddo"))
+               return "false";
+            return "true";
+        }
+
+        @Override
+        public boolean isSpellingCorrect(String guess) {
+            try {
+                return Boolean.parseBoolean(getResponse(guess));
+            } catch (IOException ioException) {
+               throw new RuntimeException(ioException.getMessage(), ioException);
+            }
+        }
     }
 }

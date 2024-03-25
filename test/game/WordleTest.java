@@ -1,51 +1,48 @@
 package game;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.IOException;
 import java.util.List;
 
 import static game.MatchLetter.*;
-import static game.MatchLetter.NO_MATCH;
-import static game.Wordle.evaluate;
-import static game.Wordle.play;
-import static game.Wordle.Response;
+import static game.Wordle.*;
 import static game.Wordle.Status.*;
-
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 public class WordleTest {
 
-    @Test
-    void canary(){
-        //assertThat(true, is(equalTo(true)));
-        assertEquals(List.of(NO_MATCH, PARTIAL_MATCH, NO_MATCH, NO_MATCH, EXACT_MATCH), evaluate("SKILL", "CIVIL"));
-        assertEquals(List.of(EXACT_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), evaluate("SKILL", "SWIRL"));
-        assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH), evaluate("SKILL", "SLICE"));
-        assertEquals(List.of(EXACT_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH), evaluate("SKILL", "SHIMS"));
-        assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH), evaluate("SKILL", "SILLY"));
-        assertEquals(List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH), evaluate("SKILL", "SKILL"));
+    @Nested
+    class WordleAlgorithm{
+        @Test
+        void generateAlgorithm(){
+            assertEquals(List.of(NO_MATCH, PARTIAL_MATCH, NO_MATCH, NO_MATCH, EXACT_MATCH), evaluate("SKILL", "CIVIL"));
+            assertEquals(List.of(EXACT_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), evaluate("SKILL", "SWIRL"));
+            assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH), evaluate("SKILL", "SLICE"));
+            assertEquals(List.of(EXACT_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH), evaluate("SKILL", "SHIMS"));
+            assertEquals(List.of(EXACT_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, EXACT_MATCH, NO_MATCH), evaluate("SKILL", "SILLY"));
+            assertEquals(List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH), evaluate("SKILL", "SKILL"));
 
-        assertEquals(List.of(PARTIAL_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("FAVOR", "AMAST"));
-        assertEquals(List.of(NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH, EXACT_MATCH), evaluate("FAVOR", "MAYOR"));
-        assertEquals(List.of(PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("FAVOR", "RAPID"));
-        assertEquals(List.of(PARTIAL_MATCH, NO_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, NO_MATCH), evaluate("SAGAS", "ABASE"));
-        assertEquals(List.of(PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH), evaluate("PANIC", "NICAP"));
-        assertEquals(List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("GUEST", "FAVOR"));
+            assertEquals(List.of(PARTIAL_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("FAVOR", "AMAST"));
+            assertEquals(List.of(NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH, EXACT_MATCH), evaluate("FAVOR", "MAYOR"));
+            assertEquals(List.of(PARTIAL_MATCH, EXACT_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("FAVOR", "RAPID"));
+            assertEquals(List.of(PARTIAL_MATCH, NO_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, NO_MATCH), evaluate("SAGAS", "ABASE"));
+            assertEquals(List.of(PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH), evaluate("PANIC", "NICAP"));
+            assertEquals(List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH), evaluate("GUEST", "FAVOR"));
 
-        assertEquals(List.of(NO_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), evaluate("FAVOR", "RIVER"));
+            assertEquals(List.of(NO_MATCH, NO_MATCH, EXACT_MATCH, NO_MATCH, EXACT_MATCH), evaluate("FAVOR", "RIVER"));
+        }
     }
+
 
     @Nested
     class Play{
@@ -228,4 +225,86 @@ public class WordleTest {
         }
     }
 
+    @Nested
+    class AgileDeveloperSpellChecker{
+        private Wordle.AgileDeveloperSpellChecker agileDeveloperSpellChecker;
+
+        @BeforeEach
+        void init() {
+            agileDeveloperSpellChecker = spy(new Wordle.AgileDeveloperSpellChecker());
+        }
+        @Test
+        void getResponseFromServiceForAWord() throws IOException {
+            assertFalse(agileDeveloperSpellChecker.getResponse("RIVER").isEmpty());
+        }
+        @Test
+        void isSpellingCorrectForCorrectSpelling() throws IOException {
+            assertTrue(agileDeveloperSpellChecker.isSpellingCorrect("good"));
+
+            verify(agileDeveloperSpellChecker, times(1)).getResponse("good");
+        }
+        @Test
+        void isSpellingCorrectForIncorrectSpelling() throws IOException {
+           // when(agileDeveloperSpellChecker.isSpellingCorrect("gddo")).thenReturn(false);
+
+            assertFalse(agileDeveloperSpellChecker.isSpellingCorrect("gddo"));
+
+            verify(agileDeveloperSpellChecker, times(1)).getResponse("gddo");
+        }
+        @Test
+        void isSpellingCorrectWithException() throws IOException {
+            when(agileDeveloperSpellChecker.getResponse("gddo")).thenThrow(new IOException("Network failure"));
+
+            var ex = assertThrows(RuntimeException.class, () -> agileDeveloperSpellChecker.isSpellingCorrect("gddo"));
+
+            assertEquals("Network failure", ex.getMessage());
+            verify(agileDeveloperSpellChecker, times(1)).getResponse("gddo");
+        }
+    }
+
+    @Nested
+    class Exceptions {
+
+        @Test
+        void theLengthOfTheTargetWordShouldBe5() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate("POOR", "FAVOR"));
+
+            assertThat("Target length should be 5.", is(equalTo(ex.getMessage())));
+        }
+
+        @Test
+        void theLengthOfTheGuessWordShouldBe5() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate("FAVOR", "POOR"));
+
+            assertThat("Guess length should be 5.", is(equalTo(ex.getMessage())));
+        }
+
+        @Test
+        void targetWordShouldNotBeNull() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate(null, "POOR"));
+
+            assertThat("Target must not be null or empty.", is(equalTo(ex.getMessage())));
+        }
+
+        @Test
+        void targetWordShouldNotBeEmpty() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate("", "POOR"));
+
+            assertThat("Target must not be null or empty.", is(equalTo(ex.getMessage())));
+        }
+
+        @Test
+        void guessWordShouldNotBeNull() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate("FAVOR", null));
+
+            assertThat("Guess must not be null or empty.", is(equalTo(ex.getMessage())));
+        }
+
+        @Test
+        void guessWordShouldNotBeEmpty() {
+            var ex = assertThrows(RuntimeException.class, () -> evaluate("FAVOR", null));
+
+            assertThat("Guess must not be null or empty.", is(equalTo(ex.getMessage())));
+        }
+    }
 }
