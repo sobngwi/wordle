@@ -88,7 +88,8 @@ public class Wordle {
         LOST
     }
 
-    public record Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult) { }
+    public record Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult) {
+    }
 
     public static Response play(final String target, final String guess, final int numberOfTries) {
         if (numberOfTries >= 6)
@@ -154,7 +155,7 @@ public class Wordle {
     }
 
     private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
-            return Objects.requireNonNullElseGet(exactOrPartialMatchMatchInfo.twoOneMatchResult, () -> Objects.requireNonNullElse(exactOrPartialMatchMatchInfo.oneTwoMatchResult, NO_MATCH));
+        return Objects.requireNonNullElseGet(exactOrPartialMatchMatchInfo.twoOneMatchResult, () -> Objects.requireNonNullElse(exactOrPartialMatchMatchInfo.oneTwoMatchResult, NO_MATCH));
     }
 
     private static MatchLetter computeOneToOneRule(List<String> guessCharacters, List<String> targetCharacters) {
@@ -183,39 +184,40 @@ public class Wordle {
 
     private static MatchLetter twoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
         String firstGuessIndex = guessCharacters.getFirst();
-        int firstGuestCharacterPosition = Integer.parseInt(firstGuessIndex.split(":")[1]);
+        int firstGuestCharacterPosition = Integer.parseInt(getIndexAsString(firstGuessIndex));
         String lastGuessIndex = guessCharacters.getLast();
-        int lastGuestCharacterPosition = Integer.parseInt(lastGuessIndex.split(":")[1]);
+        int lastGuestCharacterPosition = Integer.parseInt(getIndexAsString(lastGuessIndex));
         String firstTargetIndex = targetCharacters.getFirst();
-        int firstTargetPosition = Integer.parseInt(firstTargetIndex.split(":")[1]);
+        int firstTargetPosition = Integer.parseInt(getIndexAsString(firstTargetIndex));
         final boolean areIndexesAndPositionMatch = firstGuessIndex.equals(firstTargetIndex) && position == firstGuestCharacterPosition || lastGuessIndex.equals(firstTargetIndex) && position == lastGuestCharacterPosition;
 
-        final MatchLetter exactMatch = executeTwoMatchRuleExactMatch(guessCharacters, firstTargetIndex, areIndexesAndPositionMatch);
-        if (exactMatch != null)
-            return exactMatch;
-        return
-                executeTwoMatchRulePartialMatch(position, firstGuestCharacterPosition, firstTargetPosition);
+        final Optional<MatchLetter> exactMatch = executeTwoMatchRuleExactMatch(guessCharacters, firstTargetIndex, areIndexesAndPositionMatch);
+        return exactMatch.orElse(executeTwoMatchRulePartialMatch(position, firstGuestCharacterPosition, firstTargetPosition));
+
+    }
+
+    private static String getIndexAsString(String firstGuessIndex) {
+        Objects.requireNonNull(firstGuessIndex);
+        return firstGuessIndex.split(":")[1];
     }
 
     private static MatchLetter executeTwoMatchRulePartialMatch(int position, int firstGuestCharacterPosition, int firstTargetPosition) {
-        if (position == firstGuestCharacterPosition && firstTargetPosition > position)
-            return PARTIAL_MATCH;
-        else
-            return NO_MATCH;
+       Map<Boolean, MatchLetter> booleanMatchLetterMap = Map.of(true, PARTIAL_MATCH);
+        final boolean isPartialMatch = position == firstGuestCharacterPosition && firstTargetPosition > position;
+        return booleanMatchLetterMap.getOrDefault(isPartialMatch,NO_MATCH);
     }
 
-    private static MatchLetter executeTwoMatchRuleExactMatch(List<String> guessCharacters, String firstTargetIndex, boolean areIndexesAndPositionMatch) {
+    private static Optional<MatchLetter> executeTwoMatchRuleExactMatch(List<String> guessCharacters, String firstTargetIndex, boolean areIndexesAndPositionMatch) {
+       Map<Boolean, MatchLetter> booleanMatchLetterMap =Map.of(true, EXACT_MATCH);
         if (guessCharacters.contains(firstTargetIndex)) {
-            if (areIndexesAndPositionMatch)
-                return EXACT_MATCH;
-            else return NO_MATCH;
+            return Optional.of(booleanMatchLetterMap.getOrDefault(areIndexesAndPositionMatch, NO_MATCH));
         }
-        return null;
+        return Optional.empty();
     }
 
     private static MatchLetter exactManyToManyRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
         List<MatchLetter> willReturn = computeTheManyToManyExactRule(guessCharacters, targetCharacters);
-        boolean isPositionMatchTheFirstGuessIndex = position == Integer.parseInt(guessCharacters.getFirst().split(":")[1]);
+        boolean isPositionMatchTheFirstGuessIndex = position == Integer.parseInt(getIndexAsString(guessCharacters.getFirst()));
         if (isPositionMatchTheFirstGuessIndex)
             return willReturn.getFirst();
         else
@@ -240,12 +242,9 @@ public class Wordle {
     }
 
     private static MatchLetter oneToOneMatchingRule(List<String> guessCharacters, List<String> targetCharacters) {
+        Map<List<String>, MatchLetter> listMatchLetterMap = Map.of(guessCharacters, EXACT_MATCH);
         if (guessCharacters.size() == targetCharacters.size()) {
-            if (guessCharacters.equals(targetCharacters)) {
-                return EXACT_MATCH;
-            } else {
-                return PARTIAL_MATCH;
-            }
+            return listMatchLetterMap.getOrDefault(targetCharacters, PARTIAL_MATCH);
         }
         return null;
     }
