@@ -2,10 +2,7 @@ package game;
 
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -36,18 +33,20 @@ public class Wordle {
         R apply(T t, U u, V v);
     }
     private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
+        Map<Integer, Response> winResponses = new HashMap<>();
+        winResponses.putIfAbsent(0, new Response(retryCounter, WON, evaluateResult, AMAZING_MESSAGE));
+        winResponses.putIfAbsent(1, new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE));
+        winResponses.putIfAbsent(2, new Response(retryCounter, WON, evaluateResult, AWESOME_MESSAGE));
+        winResponses.putIfAbsent(3,new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
+
+        Map<Integer, Response> inProgressLostResponses = new HashMap<>();
+        inProgressLostResponses.putIfAbsent(1, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
+        inProgressLostResponses.putIfAbsent(6, new Response(retryCounter, LOST, evaluateResult, ""));
+
         if (isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(numberOfTries, evaluateResult)) {
-            if (numberOfTries == 0)
-                return new Response(retryCounter, WON, evaluateResult, AMAZING_MESSAGE);
-            else if (numberOfTries == 1)
-                return new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE);
-            else if ((numberOfTries == 2))
-                return new Response(retryCounter, WON, evaluateResult, AWESOME_MESSAGE);
-            else return new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE);
+            return winResponses.getOrDefault(numberOfTries, new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
         } else
-            return (retryCounter < 6) ?
-                    new Response(retryCounter, INPROGRESS, evaluateResult, "") :
-                    new Response(retryCounter, LOST, evaluateResult, "");
+            return inProgressLostResponses.getOrDefault(retryCounter, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
     };
 
     public interface SpellChecker {

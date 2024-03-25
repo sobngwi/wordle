@@ -25,7 +25,6 @@ public class SuccessFullTest {
         assertEquals(List.of(PARTIAL_MATCH, PARTIAL_MATCH, PARTIAL_MATCH, NO_MATCH, NO_MATCH), evaluate("STRAW", "TRAIN"));
         assertEquals(List.of(EXACT_MATCH, NO_MATCH, EXACT_MATCH, EXACT_MATCH, NO_MATCH), evaluate("STRAW", "SPRAY"));
         assertEquals(List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH), evaluate("STRAW", "STRAW"));
-
     }
 
 }
