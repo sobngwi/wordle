@@ -88,8 +88,7 @@ public class Wordle {
         LOST
     }
 
-    public record Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult) {
-    }
+    public record Response(int numberOfTry, Status status, List<MatchLetter> matchLetters, String messageResult) { }
 
     public static Response play(final String target, final String guess, final int numberOfTries) {
         if (numberOfTries >= 6)
@@ -151,15 +150,10 @@ public class Wordle {
 
 
     private static MatchLetter applyRulesForExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
-
         return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
     }
 
     private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
-
-        if (isExactMany.test(exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters))
-            return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
-        else
             return Objects.requireNonNullElseGet(exactOrPartialMatchMatchInfo.twoOneMatchResult, () -> Objects.requireNonNullElse(exactOrPartialMatchMatchInfo.oneTwoMatchResult, NO_MATCH));
     }
 
