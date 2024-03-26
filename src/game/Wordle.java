@@ -15,58 +15,57 @@ public class Wordle {
     private static final int WORD_SIZE = 5;
     private static final int TWO_SIZE = 2;
     private static final int ONE_SIZE = 1;
-    private static final BiPredicate<List<String>, List<String>> isExactMany = (guesses, targets) -> guesses.size() == targets.size();
-    private static final BiPredicate<List<String>, List<String>> isTwoOne = (guesses, targets) -> guesses.size() == TWO_SIZE && targets.size() == ONE_SIZE;
-    private static final BiPredicate<List<String>, List<String>> isOneTwo = (guesses, targets) -> guesses.size() == ONE_SIZE && targets.size() == TWO_SIZE;
-    private static final List<MatchLetter> exactMatchAll = List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
-    private static final List<MatchLetter> allNoMatches = List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH);
+    private static final BiPredicate<List<String>, List<String>> IS_TW_0_ONE = (guesses, targets) -> guesses.size() == TWO_SIZE && targets.size() == ONE_SIZE;
+    private static final BiPredicate<List<String>, List<String>> IS_ONE_TWO = (guesses, targets) -> guesses.size() == ONE_SIZE && targets.size() == TWO_SIZE;
+    private static final List<MatchLetter> EXACT_MATCH_ALL = List.of(EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH, EXACT_MATCH);
+    private static final List<MatchLetter> ALL_NO_MATCHES = List.of(NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH, NO_MATCH);
     private static final String AMAZING_MESSAGE = "Amazing";
     private static final String SPLENDID_MESSAGE = "Splendid";
     private static final String AWESOME_MESSAGE = "Awesome";
     private static final String YAY_MESSAGE = "Yay";
     public static final String GAME_OVER = "Game Over";
-    public static final String INCORRECT_SPELLING = "Incorrect spelling";
+    public static final String INCORRECT_SPELL = "Incorrect spelling";
     private static SpellChecker spellChecker;
-
-    @FunctionalInterface
-    private interface TriFunction<T, U, V, R> {
-        R apply(T t, U u, V v);
-    }
-
-    private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> integerListIntegerResponseTriFunction = (numberOfTries, evaluateResult, retryCounter) -> {
-        Map<Integer, Response> winResponses = new HashMap<>();
+    private static final TriFunction<Integer, List<MatchLetter>, Integer, Response> RESPONSE_TRI_FUNCTION = (numberOfTries, evaluateResult, retryCounter) -> {
+        final Map<Integer, Response> winResponses = new HashMap<>();
         winResponses.putIfAbsent(0, new Response(retryCounter, WON, evaluateResult, AMAZING_MESSAGE));
         winResponses.putIfAbsent(1, new Response(retryCounter, WON, evaluateResult, SPLENDID_MESSAGE));
         winResponses.putIfAbsent(2, new Response(retryCounter, WON, evaluateResult, AWESOME_MESSAGE));
         winResponses.putIfAbsent(3, new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
 
-        Map<Integer, Response> inProgressLostResponses = new HashMap<>();
-        inProgressLostResponses.putIfAbsent(1, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
-        inProgressLostResponses.putIfAbsent(6, new Response(retryCounter, LOST, evaluateResult, ""));
+        final Map<Integer, Response> inProgressLost = new HashMap<>();
+        inProgressLost.putIfAbsent(1, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
+        inProgressLost.putIfAbsent(6, new Response(retryCounter, LOST, evaluateResult, ""));
 
         if (isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(numberOfTries, evaluateResult)) {
             return winResponses.getOrDefault(numberOfTries, new Response(retryCounter, WON, evaluateResult, YAY_MESSAGE));
         } else
-            return inProgressLostResponses.getOrDefault(retryCounter, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
+            return inProgressLost.getOrDefault(retryCounter, new Response(retryCounter, INPROGRESS, evaluateResult, ""));
     };
+
+    @FunctionalInterface
+    private interface TriFunction<T, U, V, R> {
+        R apply(T firstArgumentType, U secondArgumentType, V returnType);
+    }
+
 
     public interface SpellChecker {
         boolean isSpellingCorrect(String guess);
     }
 
-    public static void setSpellCheckerService(SpellChecker aSpellChecker) {
+    public static void setSpellCheckerService(final SpellChecker aSpellChecker) {
         spellChecker = aSpellChecker;
     }
 
     private record ExactOrPartialMatchMatchInfo (
          int position,
          List<String> guessCharacters,
-         List<String> targetMatchingCharacters,
+         List<String> targetCharacters,
          MatchLetter twoOneMatchResult,
          MatchLetter oneTwoMatchResult){
 
-        public ExactOrPartialMatchMatchInfo(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
-            this(position, guessCharacters, targetMatchingCharacters, null, null);
+        public ExactOrPartialMatchMatchInfo(final int position, final List<String> guessCharacters, final List<String> targetCharacters) {
+            this(position, guessCharacters, targetCharacters, null, null);
         }
     }
 
@@ -87,18 +86,22 @@ public class Wordle {
         return executeThePlayTryInstance(target, guess, numberOfTries);
     }
 
-    private static Response executeThePlayTryInstance(String target, String guess, int numberOfTries) {
-        boolean isCorrectlySpelled = spellChecker.isSpellingCorrect(guess);
-        if (!isCorrectlySpelled)
-            return new Response(numberOfTries, WRONGSPELLING, allNoMatches, INCORRECT_SPELLING);
-
-        final List<MatchLetter> evaluateResult = evaluate(target, guess);
-        int retryCounter = numberOfTries + 1;
-
-        return integerListIntegerResponseTriFunction.apply(numberOfTries, evaluateResult, retryCounter);
+    private static Response executeThePlayTryInstance(final String target, final String guess, final int numberOfTries) {
+        final boolean isWellSpelled = spellChecker.isSpellingCorrect(guess);
+        if (!isWellSpelled)
+            return new Response(numberOfTries, WRONGSPELLING, ALL_NO_MATCHES, INCORRECT_SPELL);
+        else
+            return playTryInstance(target, guess, numberOfTries);
     }
 
-    private static boolean isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(int numberOfTries, List<MatchLetter> evaluateResult) {
+    private static Response playTryInstance(String target, String guess, int numberOfTries) {
+        final List<MatchLetter> evaluateResult = evaluate(target, guess);
+        final int retryCounter = numberOfTries + 1;
+
+        return RESPONSE_TRI_FUNCTION.apply(numberOfTries, evaluateResult, retryCounter);
+    }
+
+    private static boolean isTheFirstOrSecondOrThirdFourthFiveSixAttemptTheBest(final int numberOfTries, final List<MatchLetter> evaluateResult) {
         return evaluateResult.stream()
                 .allMatch(matchResult -> matchResult == EXACT_MATCH
                         && (numberOfTries == 0 || numberOfTries == 1
@@ -107,88 +110,90 @@ public class Wordle {
     }
 
 
-    public static List<MatchLetter> evaluate(String target, String guess) {
+    public static List<MatchLetter> evaluate(final String target, final String guess) {
         validateParameters(target, "Target");
         validateParameters(guess, "Guess");
 
         if (guess.equals(target))
-            return exactMatchAll;
+            return EXACT_MATCH_ALL;
 
         return IntStream.range(0, WORD_SIZE)
                 .mapToObj(position -> computeMatching(target, guess, position))
                 .toList();
     }
 
-    private static MatchLetter computeMatching(String target, String guess, int position) {
-        var targets = target.toCharArray();
-        var guesses = guess.toCharArray();
-        Map<String, List<String>> guessCharacterLists = groupCharacters(guesses);
-        Map<String, List<String>> targetCharacterLists = groupCharacters(targets);
-        String guessKey = guesses[position] + "";
+    private static MatchLetter computeMatching(final String target, final String guess, final int position) {
+        final var targets = target.toCharArray();
+        final var guesses = guess.toCharArray();
+        final Map<String, List<String>> guessesMap = groupCharacters(guesses);
+        final Map<String, List<String>> targetsMap = groupCharacters(targets);
+        final String guessKey = guesses[position] + "";
 
-        List<String> targetMatchingCharacters = targetCharacterLists.get(guessKey);
-        List<String> guessCharacters = guessCharacterLists.get(guessKey);;
-        return computeMatchingAtPosition(position, targetMatchingCharacters, guessCharacters);
+        final List<String> targetCharacters = targetsMap.get(guessKey);
+        final List<String> guessCharacters = guessesMap.get(guessKey);
+        return computeMatchingAtPosition(position, targetCharacters, guessCharacters);
     }
 
-    private static MatchLetter computeMatchingAtPosition(int position, List<String> targetMatchingCharacters, List<String> guessCharacters) {
-        if (targetMatchingCharacters == null)
+    private static MatchLetter computeMatchingAtPosition(final int position, final List<String> targetCharacters, final List<String> guessCharacters) {
+        if (targetCharacters == null)
             return NO_MATCH;
         else
-            return computeExactMatchOrPartialMatch(position, guessCharacters, targetMatchingCharacters);
+            return computeExactMatchOrPartialMatch(position, guessCharacters, targetCharacters);
     }
 
-    private static MatchLetter computeExactMatchOrPartialMatch(int position, List<String> guessCharacters, List<String> targetMatchingCharacters) {
-        final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetMatchingCharacters);
-        final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetMatchingCharacters);
-        final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetMatchingCharacters);
-        final ExactOrPartialMatchMatchInfo nonExactOrPartialMatchMatchInfo = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetMatchingCharacters, twoOneMatchResult, oneTwoMatchResult);
-        final ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo1 = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetMatchingCharacters);
+    private static MatchLetter computeExactMatchOrPartialMatch(final int position, final List<String> guessCharacters, final List<String> targetCharacters) {
+        final MatchLetter exactOrPartialMatchMatch = computeOneToOneRule(guessCharacters, targetCharacters);
+        final MatchLetter twoOneMatchResult = computeTwoOneRule(position, guessCharacters, targetCharacters);
+        final MatchLetter oneTwoMatchResult = computeOneTwoRule(guessCharacters, targetCharacters);
+        final ExactOrPartialMatchMatchInfo nonExactOrPartialMatchMatchInfo = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetCharacters, twoOneMatchResult, oneTwoMatchResult);
+        final ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo1 = new ExactOrPartialMatchMatchInfo(position, guessCharacters, targetCharacters);
         return (exactOrPartialMatchMatch == null) ?
                 applyRulesForNonExactOrPartialMatchMatch(nonExactOrPartialMatchMatchInfo)
                 : applyRulesForExactOrPartialMatchMatch(exactOrPartialMatchMatchInfo1);
     }
 
 
-    private static MatchLetter applyRulesForExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
-        return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetMatchingCharacters);
+    private static MatchLetter applyRulesForExactOrPartialMatchMatch(final ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
+        return exactManyToManyRule(exactOrPartialMatchMatchInfo.position, exactOrPartialMatchMatchInfo.guessCharacters, exactOrPartialMatchMatchInfo.targetCharacters);
     }
 
-    private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
+    private static MatchLetter applyRulesForNonExactOrPartialMatchMatch(final ExactOrPartialMatchMatchInfo exactOrPartialMatchMatchInfo) {
         return Objects.requireNonNullElseGet(exactOrPartialMatchMatchInfo.twoOneMatchResult, () -> Objects.requireNonNullElse(exactOrPartialMatchMatchInfo.oneTwoMatchResult, NO_MATCH));
     }
 
-    private static MatchLetter computeOneToOneRule(List<String> guessCharacters, List<String> targetCharacters) {
+    private static MatchLetter computeOneToOneRule(final List<String> guessCharacters, final List<String> targetCharacters) {
         return oneToOneMatchingRule(guessCharacters, targetCharacters);
     }
 
-    private static MatchLetter computeOneTwoRule(List<String> guessCharacters, List<String> targetCharacters) {
-        if (Wordle.isOneTwo.test(guessCharacters, targetCharacters))
+    private static MatchLetter computeOneTwoRule(final List<String> guessCharacters, final List<String> targetCharacters) {
+        if (IS_ONE_TWO.test(guessCharacters, targetCharacters))
             return oneTwoRule(guessCharacters, targetCharacters);
-        return null;
+        else
+            return null;
     }
 
-    private static MatchLetter computeTwoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
-        if (Wordle.isTwoOne.test(guessCharacters, targetCharacters)) {
+    private static MatchLetter computeTwoOneRule(final int position, final List<String> guessCharacters, final List<String> targetCharacters) {
+        if (IS_TW_0_ONE.test(guessCharacters, targetCharacters)) {
             return twoOneRule(position, guessCharacters, targetCharacters);
         }
-        return null;
+        else
+            return null;
     }
 
-    private static MatchLetter oneTwoRule(List<String> guessCharacters, List<String> targetCharacters) {
+    private static MatchLetter oneTwoRule(final List<String> guessCharacters, final List<String> targetCharacters) {
         if (targetCharacters.getLast().equals(guessCharacters.getFirst()))
             return EXACT_MATCH;
         else
             return PARTIAL_MATCH;
     }
 
-    private static MatchLetter twoOneRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
-        String firstGuessIndex = guessCharacters.getFirst();
-        int firstGuestCharacterPosition = Integer.parseInt(getIndexAsString(firstGuessIndex));
-        String lastGuessIndex = guessCharacters.getLast();
-        int lastGuestCharacterPosition = Integer.parseInt(getIndexAsString(lastGuessIndex));
-        String firstTargetIndex = targetCharacters.getFirst();
-        int firstTargetPosition = Integer.parseInt(getIndexAsString(firstTargetIndex));
+    private static MatchLetter twoOneRule(final int position, final List<String> guessCharacters, final List<String> targetCharacters) {
+        final String firstGuessIndex = guessCharacters.getFirst();
+        final int firstGuestCharacterPosition = Integer.parseInt(getIndexAsString(firstGuessIndex));
+        final String lastGuessIndex = guessCharacters.getLast();
+        final int lastGuestCharacterPosition = Integer.parseInt(getIndexAsString(lastGuessIndex));
+        final String firstTargetIndex = targetCharacters.getFirst();
+        final int firstTargetPosition = Integer.parseInt(getIndexAsString(firstTargetIndex));
         final boolean areIndexesAndPositionMatch = firstGuessIndex.equals(firstTargetIndex) && position == firstGuestCharacterPosition || lastGuessIndex.equals(firstTargetIndex) && position == lastGuestCharacterPosition;
 
         final Optional<MatchLetter> exactMatch = executeTwoMatchRuleExactMatch(guessCharacters, firstTargetIndex, areIndexesAndPositionMatch);
@@ -196,36 +201,36 @@ public class Wordle {
 
     }
 
-    private static String getIndexAsString(String firstGuessIndex) {
+    private static String getIndexAsString(final String firstGuessIndex) {
         Objects.requireNonNull(firstGuessIndex);
         return firstGuessIndex.split(":")[1];
     }
 
-    private static MatchLetter executeTwoMatchRulePartialMatch(int position, int firstGuestCharacterPosition, int firstTargetPosition) {
-       Map<Boolean, MatchLetter> booleanMatchLetterMap = Map.of(true, PARTIAL_MATCH);
+    private static MatchLetter executeTwoMatchRulePartialMatch(final int position, final int firstGuestCharacterPosition, final int firstTargetPosition) {
+        final Map<Boolean, MatchLetter> booleanMatchLetterMap = Map.of(true, PARTIAL_MATCH);
         final boolean isPartialMatch = position == firstGuestCharacterPosition && firstTargetPosition > position;
         return booleanMatchLetterMap.getOrDefault(isPartialMatch,NO_MATCH);
     }
 
-    private static Optional<MatchLetter> executeTwoMatchRuleExactMatch(List<String> guessCharacters, String firstTargetIndex, boolean areIndexesAndPositionMatch) {
-       Map<Boolean, MatchLetter> booleanMatchLetterMap =Map.of(true, EXACT_MATCH);
+    private static Optional<MatchLetter> executeTwoMatchRuleExactMatch(final List<String> guessCharacters, final String firstTargetIndex, final boolean areIndexesAndPositionMatch) {
+       final Map<Boolean, MatchLetter> booleanMatchLetterMap =Map.of(true, EXACT_MATCH);
         if (guessCharacters.contains(firstTargetIndex)) {
             return Optional.of(booleanMatchLetterMap.getOrDefault(areIndexesAndPositionMatch, NO_MATCH));
         }
         return Optional.empty();
     }
 
-    private static MatchLetter exactManyToManyRule(int position, List<String> guessCharacters, List<String> targetCharacters) {
-        List<MatchLetter> willReturn = computeTheManyToManyExactRule(guessCharacters, targetCharacters);
-        boolean isPositionMatchTheFirstGuessIndex = position == Integer.parseInt(getIndexAsString(guessCharacters.getFirst()));
+    private static MatchLetter exactManyToManyRule(final int position, final List<String> guessCharacters, final List<String> targetCharacters) {
+        final List<MatchLetter> exactMatchLetters = computeTheManyToManyExactRule(guessCharacters, targetCharacters);
+        final boolean isPositionMatchTheFirstGuessIndex = position == Integer.parseInt(getIndexAsString(guessCharacters.getFirst()));
         if (isPositionMatchTheFirstGuessIndex)
-            return willReturn.getFirst();
+            return exactMatchLetters.getFirst();
         else
-            return willReturn.getLast();
+            return exactMatchLetters.getLast();
     }
 
-    private static List<MatchLetter> computeTheManyToManyExactRule(List<String> guessCharacters, List<String> targetCharacters) {
-        List<MatchLetter> matchLetters = Arrays.asList(PARTIAL_MATCH, PARTIAL_MATCH);
+    private static List<MatchLetter> computeTheManyToManyExactRule(final List<String> guessCharacters, final List<String> targetCharacters) {
+        final List<MatchLetter> matchLetters = Arrays.asList(PARTIAL_MATCH, PARTIAL_MATCH);
         Map<Integer, List<MatchLetter>> exactMatchers = new HashMap<>();
         for (int i = 0; i < guessCharacters.size(); i++) {
             final int index = i;
@@ -241,39 +246,39 @@ public class Wordle {
         return matchLetters;
     }
 
-    private static MatchLetter oneToOneMatchingRule(List<String> guessCharacters, List<String> targetCharacters) {
-        Map<List<String>, MatchLetter> listMatchLetterMap = Map.of(guessCharacters, EXACT_MATCH);
+    private static MatchLetter oneToOneMatchingRule(final List<String> guessCharacters, final List<String> targetCharacters) {
+        final Map<List<String>, MatchLetter> listMatchLetterMap = Map.of(guessCharacters, EXACT_MATCH);
         if (guessCharacters.size() == targetCharacters.size()) {
             return listMatchLetterMap.getOrDefault(targetCharacters, PARTIAL_MATCH);
         }
         return null;
     }
 
-    private static Map<String, List<String>> groupCharacters(char[] guesses) {
+    private static Map<String, List<String>> groupCharacters(final char[] guesses) {
         return IntStream.range(0, WORD_SIZE)
                 .mapToObj(position -> guesses[position] + ":" + position)
                 .sorted(Comparator.comparing(key -> key.split(":")[0]))
                 .collect(Collectors.groupingBy(character -> character.split(":")[0]));
     }
 
-    private static void validateParameters(String paramValue, String paramName) {
+    private static void validateParameters(final String paramValue, final String paramName) {
         validateNullOrEmptyParamValue(paramValue, paramName);
         validateParamLengthValue(paramValue, paramName);
     }
 
-    private static void validateParamLengthValue(String paramValue, String paramName) {
+    private static void validateParamLengthValue(final String paramValue, final String paramName) {
         if (paramValue.length() != WORD_SIZE)
             throw new RuntimeException(paramName + " length should be " + WORD_SIZE + ".");
     }
 
-    private static void validateNullOrEmptyParamValue(String paramValue, String paramName) {
+    private static void validateNullOrEmptyParamValue(final String paramValue, final String paramName) {
         if (paramValue == null || paramValue.isEmpty())
             throw new RuntimeException(paramName + " must not be null or empty.");
     }
 
     public static class AgileDeveloperSpellChecker implements SpellChecker {
 
-        String getResponse(String guess) throws IOException {
+       /* default */ String getResponse(String guess) throws IOException {
             Objects.requireNonNull(guess);
             if (guess.equals("gddo"))
                 return "false";
@@ -281,7 +286,7 @@ public class Wordle {
         }
 
         @Override
-        public boolean isSpellingCorrect(String guess) {
+        public boolean isSpellingCorrect(final String guess) {
             try {
                 return Boolean.parseBoolean(getResponse(guess));
             } catch (IOException ioException) {
