@@ -6,6 +6,7 @@
   <description>
    rules
   </description>
+  <!-- Design rules -->
   <rule ref="category/java/design.xml/CyclomaticComplexity">
     <properties>
       <property name="methodReportLevel" value="3"/>
