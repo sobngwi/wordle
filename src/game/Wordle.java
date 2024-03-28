@@ -49,8 +49,13 @@ public final class Wordle {
     private static MatchLetter computeZeroToOne(final int position, final String target, final String guess, CharactersInfo charactersInfo) {
         return NO_MATCH;
     }
-    private static MatchLetter computeOneToOne(final int position, final String target, final String guess,CharactersInfo charactersInfo) {
-        return NO_MATCH;
+    private static MatchLetter computeOneToOne(final int position, final String target, final String guess,final CharactersInfo charactersInfo) {
+        final String guessKey = guess.charAt(position) + "";
+        final List<String> targets = charactersInfo.targetCharacters().get(guessKey);
+        final List<String> guesses = charactersInfo.guessCharacters().get(guessKey);
+        final boolean isExactMatch = targets.equals(guesses);
+        final Map<Boolean, MatchLetter> results = Map.of(true, EXACT_MATCH);
+        return results.getOrDefault(isExactMatch, NO_MATCH);
     }
     private static MatchLetter computeOneToTwo(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
         final String guessKey = guess.charAt(position) + "";
