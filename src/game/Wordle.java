@@ -73,13 +73,13 @@ public final class Wordle {
         final String guessKey = guess.charAt(position) + "";
         final List<String> guesses = charactersInfo.guessCharacters().getOrDefault(guessKey, List.of());
         final List<String> targets = charactersInfo.targetCharacters().getOrDefault(guessKey, List.of());
-        final Map<Integer, MatchLetter> positionsResults = getIntegerMatchLetterMap(guesses, targets);
+        final Map<Integer, MatchLetter> positionsResults = computeTheExactMatchScenarioForTwoTwo(guesses, targets);
         final boolean isExactMatch = positionsResults.get(position) == EXACT_MATCH;
         final Map<Boolean, MatchLetter> exacts = Map.of(true, EXACT_MATCH);
         return exacts.getOrDefault(isExactMatch, PARTIAL_MATCH);
     }
 
-    private static Map<Integer, MatchLetter> getIntegerMatchLetterMap(final List<String> guesses, final List<String> targets) {
+    private static Map<Integer, MatchLetter> computeTheExactMatchScenarioForTwoTwo(final List<String> guesses, final List<String> targets) {
         final  Map<Integer,MatchLetter> positionsResults = new HashMap<>();
         for (final String guess : guesses) {
             for (final String target : targets) {
