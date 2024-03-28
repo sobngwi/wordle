@@ -3,6 +3,7 @@ package game;
 
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -17,7 +18,8 @@ public final class Wordle {
             Map.of(new Sizes(0,1), Wordle::computeZeroToOne,
                     new Sizes(1,1), Wordle::computeOneToOne,
                     new Sizes(1, 2), Wordle::computeOneToTwo,
-                    new Sizes(2,1), Wordle::computeTwoToOne);
+                    new Sizes(2,1), Wordle::computeTwoToOne,
+                    new Sizes(2,2), Wordle::computeTwoToTwo);
     private Wordle() {}
     private record Sizes( int targetSize, int guessSize){}
     private record CharactersInfo(Map<String, List<String>> targetCharacters, Map<String, List<String>> guessCharacters){}
@@ -55,7 +57,7 @@ public final class Wordle {
         final List<String> guesses = charactersInfo.guessCharacters().get(guessKey);
         final boolean isExactMatch = targets.equals(guesses);
         final Map<Boolean, MatchLetter> results = Map.of(true, EXACT_MATCH);
-        return results.getOrDefault(isExactMatch, NO_MATCH);
+        return results.getOrDefault(isExactMatch, PARTIAL_MATCH);
     }
     private static MatchLetter computeOneToTwo(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
         final String guessKey = guess.charAt(position) + "";
@@ -67,6 +69,28 @@ public final class Wordle {
         final Map<Boolean, MatchLetter> partials = Map.of(true, PARTIAL_MATCH);
         return exacts.getOrDefault(isExactMatch, partials.getOrDefault(isPartialMatch,NO_MATCH));
     }
+    private static MatchLetter computeTwoToTwo(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
+        final String guessKey = guess.charAt(position) + "";
+        final List<String> guesses = charactersInfo.guessCharacters().getOrDefault(guessKey, List.of());
+        final List<String> targets = charactersInfo.targetCharacters().getOrDefault(guessKey, List.of());
+        final Map<Integer, MatchLetter> positionsResults = getIntegerMatchLetterMap(guesses, targets);
+        final boolean isExactMatch = positionsResults.get(position) == EXACT_MATCH;
+        final Map<Boolean, MatchLetter> exacts = Map.of(true, EXACT_MATCH);
+        return exacts.getOrDefault(isExactMatch, PARTIAL_MATCH);
+    }
+
+    private static Map<Integer, MatchLetter> getIntegerMatchLetterMap(final List<String> guesses, final List<String> targets) {
+        final  Map<Integer,MatchLetter> positionsResults = new HashMap<>();
+        for (final String guess : guesses) {
+            for (final String target : targets) {
+                if (target.equals(guess)) {
+                    positionsResults.put(Integer.parseInt(guess.split(":")[1]), EXACT_MATCH);
+                }
+            }
+        }
+        return positionsResults;
+    }
+
     private static MatchLetter computeTwoToOne(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
         final String guessKey = guess.charAt(position) + "";
         final List<String> guesses = charactersInfo.guessCharacters().getOrDefault(guessKey, List.of());
