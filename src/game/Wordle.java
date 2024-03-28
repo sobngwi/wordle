@@ -59,10 +59,13 @@ public final class Wordle {
     }
     private static MatchLetter computeOneToTwo(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
         final String guessKey = guess.charAt(position) + "";
+        final List<String> guesses = charactersInfo.guessCharacters().getOrDefault(guessKey, List.of());
         final List<String> targets = charactersInfo.targetCharacters().getOrDefault(guessKey, List.of());
         final boolean isPartialMatch =  position < getPositionOfFirstElementInList(targets);
-        final Map<Boolean, MatchLetter> results = Map.of(true, PARTIAL_MATCH);
-        return results.getOrDefault(isPartialMatch, NO_MATCH);
+        final boolean isExactMatch = guesses.contains(targets.getFirst()) && position == getPositionOfFirstElementInList(targets);
+        final Map<Boolean, MatchLetter> exacts = Map.of(true, EXACT_MATCH);
+        final Map<Boolean, MatchLetter> partials = Map.of(true, PARTIAL_MATCH);
+        return exacts.getOrDefault(isExactMatch, partials.getOrDefault(isPartialMatch,NO_MATCH));
     }
     private static MatchLetter computeTwoToOne(final int position, final String target, final String guess, final CharactersInfo charactersInfo) {
         final String guessKey = guess.charAt(position) + "";
