@@ -70,7 +70,7 @@ public final class Wordle {
         final List<String> targets = charactersInfo.targetCharacters().getOrDefault(guessKey, List.of());
         final boolean isExactMatch = targets.contains(guesses.getFirst()) && position == getPositionOfFirstElementInList(guesses);
         final Map<Boolean, MatchLetter> results = Map.of(true, EXACT_MATCH);
-        return results.getOrDefault(isExactMatch, NO_MATCH);
+        return results.getOrDefault(isExactMatch, PARTIAL_MATCH);
     }
     private static int getPositionOfFirstElementInList(final List<String> strings){
         return Integer.parseInt(strings.getFirst().charAt(2) + "");
